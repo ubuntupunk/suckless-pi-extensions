@@ -13,7 +13,7 @@ export default function (pi: ExtensionAPI) {
 }
 
 export function registerThemeCommand(pi: ExtensionAPI) {
-  pi.registerCommand("theme", {
+  pi.registerCommand("themer", {
     description: "Select theme with preview",
     handler: async (_args, ctx) => {
       const allThemes = ctx.ui?.getAllThemes();

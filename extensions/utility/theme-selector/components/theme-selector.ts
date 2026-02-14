@@ -25,6 +25,12 @@ export class ThemeSelector extends Container {
     this.selectList.onSelectionChange = (item) => onSelectionChange(item.value);
   }
 
+  updateTheme(): void {
+    // @ts-ignore - reaching into SelectList internals to update theme for preview
+    this.selectList.theme = getSelectListTheme();
+    this.selectList.invalidate();
+  }
+
   handleInput(data: string): void {
     this.selectList.handleInput(data);
   }

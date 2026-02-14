@@ -13,7 +13,7 @@ export default function (pi: ExtensionAPI) {
 }
 
 export function registerThemeCommand(pi: ExtensionAPI) {
-  pi.registerCommand("themer", {
+  pi.registerCommand("theme", {
     description: "Select theme with preview",
     handler: async (_args, ctx) => {
       const allThemes = ctx.ui?.getAllThemes();
@@ -55,7 +55,7 @@ export function registerThemeCommand(pi: ExtensionAPI) {
       let selected: string | null | undefined = await ctx.ui.custom<
         string | null
       >((_tui, _theme, _keybindings, done) => {
-        return new ThemeSelector(
+        const selector = new ThemeSelector(
           options,
           currentIndex,
           (value) => {
@@ -80,9 +80,11 @@ export function registerThemeCommand(pi: ExtensionAPI) {
               const t = themeMap.get(value);
               if (t) ctx.ui.setTheme(t);
               else ctx.ui.setTheme(value);
-            }, 50); // Increased to 50ms for stability
+              selector.updateTheme();
+            }, 100); // 100ms for stable cycling
           },
         );
+        return selector;
       });
 
       // RPC fallback: use select dialog

@@ -78,10 +78,11 @@ export function registerThemeCommand(pi: ExtensionAPI) {
             debounceTimer = setTimeout(() => {
               lastAppliedTheme = value;
               const t = themeMap.get(value);
+              // Use setThemeInstance for objects to avoid reloading
               if (t) ctx.ui.setTheme(t);
               else ctx.ui.setTheme(value);
               selector.updateTheme();
-            }, 100); // 100ms for stable cycling
+            }, 250); // Increased to 250ms for stability during rapid cycling
           },
         );
         return selector;

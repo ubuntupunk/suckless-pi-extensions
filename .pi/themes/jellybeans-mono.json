@@ -43,7 +43,7 @@
     "warning": "warning",
     "muted": "greyChateau",
     "dim": "scorpion",
-    "text": "",
+    "text": "foreground",
     "thinkingText": "regentGrey",
 
     "selectedBg": "greyOne",

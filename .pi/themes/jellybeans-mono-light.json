@@ -44,7 +44,7 @@
     "warning": "warning",
     "muted": "greyTwo",
     "dim": "regentGrey",
-    "text": "",
+    "text": "foreground",
     "thinkingText": "greyTwo",
 
     "selectedBg": "greyOne",

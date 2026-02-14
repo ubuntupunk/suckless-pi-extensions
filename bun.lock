@@ -4,8 +4,10 @@
     "": {
       "name": "@ubuntupunk/suckless-pi",
       "dependencies": {
+        "@aliou/pi-agent-kit": "*",
         "@aliou/pi-linkup": "^0.7.1",
-        "@aliou/pi-utils-settings": "^0.2.0",
+        "@aliou/pi-utils-settings": "*",
+        "@aliou/pi-utils-ui": "*",
         "@aliou/sesame": "^0.4.0",
         "@aliou/sh": "^0.1.0",
         "@mariozechner/pi-coding-agent": "*",
@@ -22,11 +24,40 @@
         "typescript": "^5.7.0",
       },
     },
+    "packages/agent-kit": {
+      "name": "@aliou/pi-agent-kit",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@mariozechner/pi-agent-core": ">=0.8.0",
+        "@mariozechner/pi-ai": ">=0.8.0",
+        "@mariozechner/pi-coding-agent": ">=0.51.0",
+        "@mariozechner/pi-tui": ">=0.8.0",
+      },
+    },
+    "packages/settings": {
+      "name": "@aliou/pi-utils-settings",
+      "version": "0.3.0",
+      "peerDependencies": {
+        "@mariozechner/pi-coding-agent": ">=0.51.0",
+      },
+    },
+    "packages/ui": {
+      "name": "@aliou/pi-utils-ui",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@mariozechner/pi-coding-agent": ">=0.51.0",
+        "@mariozechner/pi-tui": ">=0.8.0",
+      },
+    },
   },
   "packages": {
+    "@aliou/pi-agent-kit": ["@aliou/pi-agent-kit@workspace:packages/agent-kit"],
+
     "@aliou/pi-linkup": ["@aliou/pi-linkup@0.7.1", "", { "dependencies": { "@aliou/pi-utils-settings": "^0.2.1" }, "peerDependencies": { "@mariozechner/pi-ai": ">=0.52.7", "@mariozechner/pi-coding-agent": ">=0.52.7" } }, "sha512-1NzzrzaVNzqv+9UuRpYXrBgI1OQcMevS2h1AyaWGdOCk7kSWckXtOVoJ47V+R3pRrwoZsF3TqKrOnZxNmKlXaA=="],
 
-    "@aliou/pi-utils-settings": ["@aliou/pi-utils-settings@0.2.1", "", { "peerDependencies": { "@mariozechner/pi-coding-agent": ">=0.51.0" } }, "sha512-+yJqraBFUUmekA3P6B/nJLIQLetaz9UCsowOaCt35IUZmOar2y2Tg8If+KbTqrwWib9ljsi3F+wQxV8suB9Eww=="],
+    "@aliou/pi-utils-settings": ["@aliou/pi-utils-settings@workspace:packages/settings"],
+
+    "@aliou/pi-utils-ui": ["@aliou/pi-utils-ui@workspace:packages/ui"],
 
     "@aliou/sesame": ["@aliou/sesame@0.4.0", "", { "peerDependencies": { "@mariozechner/pi-coding-agent": "*" }, "bin": { "sesame": "bin/sesame" } }, "sha512-r3xKC+6kIW9Q/ECjgzscerJcmhc8zJ4wfAF+U1m2iS/h5uQLUz8/bpmNR46jFmyfa75MRe0qxlYIW+NfLuohcQ=="],
 
@@ -691,6 +722,8 @@
     "zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.1", "", { "peerDependencies": { "zod": "^3.25 || ^4" } }, "sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA=="],
+
+    "@aliou/pi-linkup/@aliou/pi-utils-settings": ["@aliou/pi-utils-settings@0.2.1", "", { "peerDependencies": { "@mariozechner/pi-coding-agent": ">=0.51.0" } }, "sha512-+yJqraBFUUmekA3P6B/nJLIQLetaz9UCsowOaCt35IUZmOar2y2Tg8If+KbTqrwWib9ljsi3F+wQxV8suB9Eww=="],
 
     "@aws-crypto/sha256-browser/@smithy/util-utf8": ["@smithy/util-utf8@2.3.0", "", { "dependencies": { "@smithy/util-buffer-from": "^2.2.0", "tslib": "^2.6.2" } }, "sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A=="],
 

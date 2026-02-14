@@ -8,6 +8,9 @@
   ],
   "author": "ubuntupunk",
   "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
   "pi": {
     "extensions": [
       "extensions/suckless/status-bar.ts",
@@ -44,7 +47,9 @@
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-tui": "*",
     "@aliou/sh": "^0.1.0",
-    "@aliou/pi-utils-settings": "^0.2.0",
+    "@aliou/pi-utils-settings": "*",
+    "@aliou/pi-utils-ui": "*",
+    "@aliou/pi-agent-kit": "*",
     "@sinclair/typebox": "^0.34.41",
     "@aliou/sesame": "^0.4.0",
     "better-sqlite3": "^12.6.2",

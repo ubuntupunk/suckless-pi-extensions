@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 
@@ -7,6 +8,31 @@ import { Text } from "@mariozechner/pi-tui";
  * A minimal, stable status bar that provides essential session info.
  * Replaces heavier, potentially janky TUI status extensions.
  */
+
+function getGitBranch(cwd: string): string {
+  try {
+    return execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd,
+      encoding: "utf-8",
+      stdio: "pipe",
+    }).trim();
+  } catch {
+    return "none";
+  }
+}
+
+function getGitCommit(cwd: string): string {
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      cwd,
+      encoding: "utf-8",
+      stdio: "pipe",
+    }).trim();
+  } catch {
+    return "none";
+  }
+}
+
 export default function statusBarExtension(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     updateStatusBar(ctx);
@@ -25,10 +51,16 @@ export default function statusBarExtension(pi: ExtensionAPI) {
       const provider = ctx.model?.provider || "unknown";
       const thinking = pi.getThinkingLevel() || "off";
       const sessionId = ctx.sessionManager.getSessionId()?.slice(0, 8) || "none";
+      const sessionName = pi.getSessionName() || sessionId;
 
-      // Format: [ SESSION: abc12345 ] [ MODEL: gemini-3-flash-preview ] [ THINKING: off ]
+      const branch = getGitBranch(ctx.cwd);
+      const commit = getGitCommit(ctx.cwd);
+
+      // Format: [ SESSION: name ] [ COMMIT: hash ] [ BRANCH: branch ] [ MODEL: gemini-3-flash-preview ] [ THINKING: off ]
       const statusText = [
-        ` ${theme.fg("muted", "[")} ${theme.fg("accent", "SESSION:")} ${theme.fg("success", sessionId)} ${theme.fg("muted", "]")} `,
+        ` ${theme.fg("muted", "[")} ${theme.fg("accent", "SESSION:")} ${theme.fg("success", sessionName)} ${theme.fg("muted", "]")} `,
+        `${theme.fg("muted", "[")} ${theme.fg("accent", "COMMIT:")} ${theme.fg("success", commit)} ${theme.fg("muted", "]")} `,
+        `${theme.fg("muted", "[")} ${theme.fg("accent", "BRANCH:")} ${theme.fg("success", branch)} ${theme.fg("muted", "]")} `,
         `${theme.fg("muted", "[")} ${theme.fg("accent", "MODEL:")} ${theme.fg("success", model)} (${provider}) ${theme.fg("muted", "]")} `,
         `${theme.fg("muted", "[")} ${theme.fg("accent", "THINKING:")} ${theme.fg("warning", thinking)} ${theme.fg("muted", "]")} `,
       ].join("");

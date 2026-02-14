@@ -3,10 +3,12 @@ import type { SelectItem } from "@mariozechner/pi-tui";
 import { ThemeSelector } from "./components/theme-selector";
 
 export default function (pi: ExtensionAPI) {
+  console.log("Theme selector extension initializing...");
   registerThemeCommand(pi);
   pi.registerCommand("theme_test", {
     description: "Test if theme selector extension is loaded",
     handler: async (_args, ctx) => {
+      console.log("theme_test command executed");
       ctx.ui.notify("Theme selector extension is LOADED", "info");
     },
   });

@@ -4,6 +4,12 @@ import { ThemeSelector } from "./components/theme-selector";
 
 export default function (pi: ExtensionAPI) {
   registerThemeCommand(pi);
+  pi.registerCommand("theme_test", {
+    description: "Test if theme selector extension is loaded",
+    handler: async (_args, ctx) => {
+      ctx.ui.notify("Theme selector extension is LOADED", "info");
+    },
+  });
 }
 
 export function registerThemeCommand(pi: ExtensionAPI) {

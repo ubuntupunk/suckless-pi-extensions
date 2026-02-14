@@ -27,6 +27,7 @@
       "extensions/utility/review-tools/index.ts",
       "extensions/utility/session-naming/index.ts",
       "extensions/utility/system-prompt-viewer/index.ts",
+      "extensions/utility/brave-search/index.ts",
       "extensions/functional/extension-dev/index.ts",
       "extensions/functional/guardrails/index.ts",
       "extensions/functional/files-widget/index.ts",
@@ -54,14 +55,21 @@
     "@aliou/sesame": "^0.4.0",
     "better-sqlite3": "^12.6.2",
     "yaml": "^2.8.2",
-    "@aliou/pi-linkup": "^0.7.1"
+    "@aliou/pi-linkup": "^0.7.1",
+    "@mozilla/readability": "^0.5.0",
+    "jsdom": "^26.0.0",
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "@types/jsdom": "^21.1.7",
+    "@types/turndown": "^5.0.5",
+    "@types/mozilla-readability": "^0.2.1"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -126,6 +126,10 @@ function buildContent(
 // Command
 // ---------------------------------------------------------------------------
 
+export default function (pi: ExtensionAPI) {
+  registerSystemPromptCommand(pi);
+}
+
 export function registerSystemPromptCommand(pi: ExtensionAPI) {
   pi.registerCommand("system-prompt", {
     description: "View the current system prompt",

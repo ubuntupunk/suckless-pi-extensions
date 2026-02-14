@@ -5,6 +5,10 @@ interface SessionNameState {
   hasAutoNamed: boolean;
 }
 
+export default function (pi: ExtensionAPI) {
+  setupSessionNameHook(pi);
+}
+
 export function setupSessionNameHook(pi: ExtensionAPI) {
   const state: SessionNameState = {
     hasAutoNamed: false,

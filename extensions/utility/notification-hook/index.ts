@@ -64,6 +64,10 @@ function emitNotification(pi: ExtensionAPI, message: string, sound?: string) {
   pi.events.emit(NOTIFICATION_EVENT, event);
 }
 
+export default function (pi: ExtensionAPI) {
+  setupNotificationHook(pi);
+}
+
 export function setupNotificationHook(pi: ExtensionAPI) {
   let loopCount = 0;
   let toolCallCount = 0;

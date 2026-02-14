@@ -40,8 +40,8 @@
       "prompts/"
     ],
     "themes": [
-      "themes/*.json",
-      ".pi/themes/*.json"
+      "themes/",
+      ".pi/themes/"
     ]
   },
   "dependencies": {

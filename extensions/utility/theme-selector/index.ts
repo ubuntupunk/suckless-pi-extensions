@@ -16,9 +16,9 @@ export function registerThemeCommand(pi: ExtensionAPI) {
   pi.registerCommand("themer", {
     description: "Select theme with preview",
     handler: async (_args, ctx) => {
-      const allThemes = ctx.ui.getAllThemes();
-      if (allThemes.length === 0) {
-        ctx.ui.notify("No themes available", "warning");
+      const allThemes = ctx.ui?.getAllThemes();
+      if (!allThemes || allThemes.length === 0) {
+        ctx.ui?.notify("No themes available", "warning");
         return;
       }
 
@@ -28,10 +28,14 @@ export function registerThemeCommand(pi: ExtensionAPI) {
       // Find current theme index
       let currentIndex = 0;
       for (const [i, t] of allThemes.entries()) {
-        const loadedTheme = ctx.ui.getTheme(t.name);
-        if (loadedTheme === originalTheme) {
-          currentIndex = i;
-          break;
+        try {
+          const loadedTheme = ctx.ui.getTheme(t.name);
+          if (loadedTheme === originalTheme) {
+            currentIndex = i;
+            break;
+          }
+        } catch {
+          // ignore
         }
       }
 
@@ -62,7 +66,10 @@ export function registerThemeCommand(pi: ExtensionAPI) {
       // RPC fallback: use select dialog
       if (selected === undefined) {
         const themeNames = allThemes.map((t) => t.name);
-        selected = await ctx.ui.select("Select theme", themeNames);
+        selected = await ctx.ui.select(
+          `Select theme (${allThemes.length} available)`,
+          themeNames,
+        );
         if (selected) {
           ctx.ui.setTheme(selected);
         }

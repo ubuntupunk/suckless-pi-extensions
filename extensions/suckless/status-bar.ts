@@ -18,14 +18,13 @@ export default function statusBarExtension(pi: ExtensionAPI) {
 
   // Update status bar when configuration or session state changes
   function updateStatusBar(ctx: any) {
-    if (!ctx.hasUI) return;
+    if (!ctx || !ctx.hasUI || !ctx.sessionManager) return;
 
     ctx.ui.setWidget("suckless-status", (_tui: any, theme: any) => {
-      const model = ctx.sessionManager.getSession()?.model || "unknown";
-      const provider = ctx.sessionManager.getSession()?.provider || "unknown";
-      const thinking = ctx.sessionManager.getSession()?.thinking || "off";
-      const sessionId =
-        ctx.sessionManager.getSession()?.id?.slice(0, 8) || "none";
+      const model = ctx.model?.id || "unknown";
+      const provider = ctx.model?.provider || "unknown";
+      const thinking = pi.getThinkingLevel() || "off";
+      const sessionId = ctx.sessionManager.getSessionId()?.slice(0, 8) || "none";
 
       // Format: [ SESSION: abc12345 ] [ MODEL: gemini-3-flash-preview ] [ THINKING: off ]
       const statusText = [

@@ -22,20 +22,24 @@ export function registerThemeCommand(pi: ExtensionAPI) {
         return;
       }
 
+      // Pre-load theme objects to avoid disk I/O during preview
+      const themeMap = new Map<string, any>();
+      for (const t of allThemes) {
+        try {
+          const themeObj = ctx.ui.getTheme(t.name);
+          if (themeObj) themeMap.set(t.name, themeObj);
+        } catch {}
+      }
+
       // Store original theme to restore on cancel
       const originalTheme = ctx.ui.theme;
 
       // Find current theme index
       let currentIndex = 0;
       for (const [i, t] of allThemes.entries()) {
-        try {
-          const loadedTheme = ctx.ui.getTheme(t.name);
-          if (loadedTheme === originalTheme) {
-            currentIndex = i;
-            break;
-          }
-        } catch {
-          // ignore
+        if (t.name === originalTheme.name) {
+          currentIndex = i;
+          break;
         }
       }
 
@@ -45,6 +49,8 @@ export function registerThemeCommand(pi: ExtensionAPI) {
         description: t.path ? "Custom" : "Built-in",
       }));
 
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
       let selected: string | null | undefined = await ctx.ui.custom<
         string | null
       >((_tui, _theme, _keybindings, done) => {
@@ -52,14 +58,25 @@ export function registerThemeCommand(pi: ExtensionAPI) {
           options,
           currentIndex,
           (value) => {
-            ctx.ui.setTheme(value);
+            if (debounceTimer) clearTimeout(debounceTimer);
+            const t = themeMap.get(value);
+            if (t) ctx.ui.setTheme(t);
+            else ctx.ui.setTheme(value);
             done(value);
           },
           () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
             ctx.ui.setTheme(originalTheme);
             done(null);
           },
-          (value) => ctx.ui.setTheme(value),
+          (value) => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+              const t = themeMap.get(value);
+              if (t) ctx.ui.setTheme(t);
+              else ctx.ui.setTheme(value);
+            }, 10);
+          },
         );
       });
 

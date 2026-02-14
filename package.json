@@ -40,7 +40,6 @@
       "prompts/"
     ],
     "themes": [
-      "themes/",
       ".pi/themes/"
     ]
   },

@@ -26,7 +26,7 @@ export class ThemeSelector extends Container {
   }
 
   updateTheme(): void {
-    // @ts-ignore - reaching into SelectList internals to update theme for preview
+    // @ts-expect-error - reaching into SelectList internals to update theme for preview
     this.selectList.theme = getSelectListTheme();
     this.selectList.invalidate();
   }

@@ -198,6 +198,13 @@ export function setupProcessesCommands(
     },
   });
 
+  // Alias /logs to /process:logs
+  pi.registerCommand("logs", {
+    description: "Show log file paths for a process (alias for /process:logs)",
+    getArgumentCompletions: allProcessCompletions(manager),
+    handler: (args, ctx) => pi.executeCommand(`process:logs ${args}`, ctx),
+  });
+
   // ── /process:kill [id|name] ────────────────────────────────────────
   pi.registerCommand("process:kill", {
     description: "Kill a running background process",

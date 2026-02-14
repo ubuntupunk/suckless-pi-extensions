@@ -241,4 +241,11 @@ export default async function coreToolsExtension(pi: ExtensionAPI) {
       ctx.ui.notify(`Session: ${input}`, "info");
     },
   });
+
+  pi.registerCommand("core_test", {
+    description: "Test if core tools extension is loaded",
+    handler: async (_args, ctx) => {
+      ctx.ui.notify("Core tools extension is LOADED", "info");
+    },
+  });
 }

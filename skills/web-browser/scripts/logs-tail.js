@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { existsSync, readdirSync, readFileSync, statSync, watch } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  watch,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -32,7 +38,8 @@ function statSafe(path) {
 }
 
 const argIndex = process.argv.indexOf("--file");
-const filePath = argIndex !== -1 ? process.argv[argIndex + 1] : findLatestFile();
+const filePath =
+  argIndex !== -1 ? process.argv[argIndex + 1] : findLatestFile();
 const follow = process.argv.includes("--follow");
 
 if (!filePath) {

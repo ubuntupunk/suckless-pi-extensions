@@ -6,7 +6,6 @@ import {
   visibleWidth,
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
-import type { Static } from "@sinclair/typebox";
 
 export interface Question {
   question: string;

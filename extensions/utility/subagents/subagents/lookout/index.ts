@@ -54,7 +54,6 @@ Local codebase search by behavior or concept. Uses semantic search + grep/find f
 
 **Example:** \`{ "query": "Where is the database connection pool configured?" }\``;
 
-
 const parameters = Type.Object({
   query: Type.String({
     description: "Search query describing what to find in the codebase",

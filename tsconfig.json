@@ -2,10 +2,12 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@aliou/pi-utils-ui": ["packages/ui/index.ts"],
       "@aliou/pi-utils-settings": ["packages/settings/index.ts"],

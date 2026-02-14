@@ -34,7 +34,9 @@ export async function connect(timeout = 5000) {
   } catch (e) {
     clearTimeout(timeoutId);
     if (e.name === "AbortError") {
-      throw new Error("Connection timeout - is Chrome running with --remote-debugging-port=9222?");
+      throw new Error(
+        "Connection timeout - is Chrome running with --remote-debugging-port=9222?",
+      );
     }
     throw e;
   }
@@ -144,13 +146,13 @@ class CDP {
         awaitPromise: true,
       },
       sessionId,
-      timeout
+      timeout,
     );
 
     if (result.exceptionDetails) {
       throw new Error(
         result.exceptionDetails.exception?.description ||
-          result.exceptionDetails.text
+          result.exceptionDetails.text,
       );
     }
     return result.result?.value;
@@ -161,7 +163,7 @@ class CDP {
       "Page.captureScreenshot",
       { format: "png" },
       sessionId,
-      timeout
+      timeout,
     );
     return Buffer.from(data, "base64");
   }
@@ -180,7 +182,7 @@ class CDP {
     const { executionContextId } = await this.send(
       "Page.createIsolatedWorld",
       { frameId, worldName: "cdp-eval" },
-      sessionId
+      sessionId,
     );
 
     const result = await this.send(
@@ -192,13 +194,13 @@ class CDP {
         awaitPromise: true,
       },
       sessionId,
-      timeout
+      timeout,
     );
 
     if (result.exceptionDetails) {
       throw new Error(
         result.exceptionDetails.exception?.description ||
-          result.exceptionDetails.text
+          result.exceptionDetails.text,
       );
     }
     return result.result?.value;

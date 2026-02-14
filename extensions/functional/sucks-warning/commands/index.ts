@@ -211,7 +211,9 @@ export function setupSucksWarningCommands(pi: ExtensionAPI): void {
 
       const result = await ctx.ui.custom<void>(
         (_tui, theme, _keybindings, done) => {
-          return new SucksWarningStatusOverlay(theme, data, () => done(undefined));
+          return new SucksWarningStatusOverlay(theme, data, () =>
+            done(undefined),
+          );
         },
         {
           overlay: true,
@@ -240,4 +242,3 @@ export function setupSucksWarningCommands(pi: ExtensionAPI): void {
     },
   });
 }
-

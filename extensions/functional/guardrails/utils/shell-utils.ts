@@ -42,6 +42,8 @@ function partToString(part: WordPart): string {
       return `$((${part.expr}))`;
     case "ProcSubst":
       return `${part.op}(...)`;
+    default:
+      return "";
   }
 }
 
@@ -134,6 +136,8 @@ function walkCommand(
     case "ArithCmd":
     case "DeclClause":
     case "LetClause":
+      return false;
+    default:
       return false;
   }
 }

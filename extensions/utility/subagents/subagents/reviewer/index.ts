@@ -54,7 +54,6 @@ Fast, high-signal code review feedback on diffs. Acts as a senior reviewer.
 
 **Output:** Summary, P0-P3 Findings, Verdict.`;
 
-
 const parameters = Type.Object({
   diff: Type.String({
     description:

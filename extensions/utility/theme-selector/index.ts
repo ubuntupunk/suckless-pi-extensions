@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import type { SelectItem } from "@mariozechner/pi-tui";
-import { ThemeSelector } from "../components/theme-selector";
+import { ThemeSelector } from "./components/theme-selector";
 
 export function registerThemeCommand(pi: ExtensionAPI) {
   pi.registerCommand("theme", {

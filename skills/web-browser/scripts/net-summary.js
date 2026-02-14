@@ -32,7 +32,8 @@ function findLatestFile() {
 }
 
 const argIndex = process.argv.indexOf("--file");
-const filePath = argIndex !== -1 ? process.argv[argIndex + 1] : findLatestFile();
+const filePath =
+  argIndex !== -1 ? process.argv[argIndex + 1] : findLatestFile();
 
 if (!filePath) {
   console.error("✗ No log file found");

@@ -80,7 +80,6 @@ Web research and GitHub exploration subagent. Analyze URLs, search web, and expl
 
 *Note: Use Scout for analysis; use linkup tools for raw markdown.*`;
 
-
 const parameters = Type.Object({
   url: Type.Optional(
     Type.String({

@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { generateAndSetTitle } from "../lib/title";
+import { generateAndSetTitle } from "./lib/title";
 
 interface SessionNameState {
   hasAutoNamed: boolean;

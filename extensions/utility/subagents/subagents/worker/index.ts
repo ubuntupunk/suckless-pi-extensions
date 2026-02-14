@@ -64,7 +64,6 @@ Sandboxed implementation subagent for well-defined tasks on specific files.
 
 *Note: The worker reads, edits, writes, and runs bash for verification.*`;
 
-
 const parameters = Type.Object({
   task: Type.String({
     description:

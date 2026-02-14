@@ -50,7 +50,6 @@ Advisory subagent for architecture, reviews, and complex planning.
 
 **Example:** \`{ "task": "plan implementation of real-time collab", "files": ["src/auth.ts"] }\``;
 
-
 const parameters = Type.Object({
   task: Type.String({ description: "What to help with" }),
   context: Type.Optional(Type.String({ description: "Background info" })),

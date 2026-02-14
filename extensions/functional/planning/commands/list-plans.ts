@@ -17,16 +17,20 @@ import {
   type ExtensionCommandContext,
 } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
-import { configLoader } from "../lib/config";
-import type { ArchiveResult } from "../lib/plan-selector";
-import { selectPlan } from "../lib/plan-selector";
+import { selectPlan } from "../components/plan-selector";
+import type { PlanInfo } from "../core";
 import {
   checkDependencies,
+  configLoader,
   listPlans,
   readPlan,
   updatePlanStatus,
-} from "../lib/plan-utils";
-import type { PlanInfo } from "../lib/types";
+} from "../core";
+
+interface ArchiveResult {
+  ok: boolean;
+  message: string;
+}
 
 /**
  * Check if the current session has any messages (not counting the header).

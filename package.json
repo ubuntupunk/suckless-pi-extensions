@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Curated, audited, and suckless extensions for Pi",
   "main": "index.js",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "author": "ubuntupunk",
   "license": "MIT",
   "pi": {
@@ -14,9 +16,15 @@
       "extensions/functional/sucks-warning/index.ts",
       "extensions/functional/*.ts"
     ],
-    "skills": ["skills/"],
-    "prompts": ["prompts/"],
-    "themes": ["themes/*.json"]
+    "skills": [
+      "skills/"
+    ],
+    "prompts": [
+      "prompts/"
+    ],
+    "themes": [
+      "themes/*.json"
+    ]
   },
   "dependencies": {
     "@mariozechner/pi-coding-agent": "*",
@@ -28,5 +36,17 @@
     "better-sqlite3": "^12.6.2",
     "yaml": "^2.8.2",
     "@aliou/pi-linkup": "^0.7.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write ."
   }
 }

@@ -5,10 +5,14 @@
  * Use /browse to open the file browser, navigate with j/k, Enter to view.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { join } from "node:path";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-import { createFileBrowser, formatCommentMessage, POLL_INTERVAL_MS } from "./core";
+import {
+  createFileBrowser,
+  formatCommentMessage,
+  POLL_INTERVAL_MS,
+} from "./core";
 
 export default function fileBrowserExtension(pi: ExtensionAPI): void {
   const cwd = process.cwd();
@@ -36,7 +40,14 @@ export default function fileBrowserExtension(pi: ExtensionAPI): void {
         };
 
         const requestRender = () => tui.requestRender();
-        const browser = createFileBrowser(cwd, agentModifiedFiles, theme, cleanup, requestComment, requestRender);
+        const browser = createFileBrowser(
+          cwd,
+          agentModifiedFiles,
+          theme,
+          cleanup,
+          requestComment,
+          requestRender,
+        );
 
         pollInterval = setInterval(() => {
           requestRender();

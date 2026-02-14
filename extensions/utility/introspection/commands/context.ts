@@ -209,7 +209,7 @@ function buildContent(
   const contextLines: string[] = [];
   if (contextUsage) {
     contextLines.push(
-      `${theme.fg("dim", "Tokens:")}     ${formatTokens(contextUsage.tokens)} / ${formatTokens(contextWindow)}`,
+      `${theme.fg("dim", "Tokens:")}     ${formatTokens(contextUsage.tokens ?? 0)} / ${formatTokens(contextWindow)}`,
     );
   }
   contextLines.push(`${theme.fg("dim", "Turns:")}      ${usage.turnCount}`);

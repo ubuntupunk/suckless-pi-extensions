@@ -1,13 +1,18 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import yaml from "yaml";
 import { ConfigLoader } from "@aliou/pi-utils-settings";
+import yaml from "yaml";
 
 // ============================================================================
 // CONFIG & TYPES
 // ============================================================================
 
-export type PlanStatus = "pending" | "in-progress" | "completed" | "cancelled" | "abandoned";
+export type PlanStatus =
+  | "pending"
+  | "in-progress"
+  | "completed"
+  | "cancelled"
+  | "abandoned";
 
 export interface PlanInfo {
   filename: string;
@@ -35,11 +40,10 @@ const DEFAULT_CONFIG: ResolvedPlanningConfig = {
   archiveDir: ".pi/plans/archive",
 };
 
-export const configLoader = new ConfigLoader<PlanningConfig, ResolvedPlanningConfig>(
-  "planning",
-  DEFAULT_CONFIG,
-  { scopes: ["global", "local"] }
-);
+export const configLoader = new ConfigLoader<
+  PlanningConfig,
+  ResolvedPlanningConfig
+>("planning", DEFAULT_CONFIG, { scopes: ["global", "local"] });
 
 // ============================================================================
 // IO & PARSING
@@ -64,7 +68,7 @@ export async function listPlans(cwd: string): Promise<PlanInfo[]> {
   const plansDir = path.resolve(cwd, config.plansDir);
   if (!fs.existsSync(plansDir)) return [];
 
-  const files = fs.readdirSync(plansDir).filter(f => f.endsWith(".md"));
+  const files = fs.readdirSync(plansDir).filter((f) => f.endsWith(".md"));
   const plans: PlanInfo[] = [];
 
   for (const file of files) {
@@ -87,7 +91,12 @@ export async function listPlans(cwd: string): Promise<PlanInfo[]> {
   return plans.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function savePlan(cwd: string, slug: string, data: any, body: string): Promise<string> {
+export async function savePlan(
+  cwd: string,
+  slug: string,
+  data: any,
+  body: string,
+): Promise<string> {
   const config = configLoader.getConfig();
   const plansDir = path.resolve(cwd, config.plansDir);
   if (!fs.existsSync(plansDir)) fs.mkdirSync(plansDir, { recursive: true });
@@ -100,16 +109,45 @@ export async function savePlan(cwd: string, slug: string, data: any, body: strin
 // LOGIC
 // ============================================================================
 
-export function tickStep(body: string, stepIndex: number, completed: boolean): string {
+export function tickStep(
+  body: string,
+  stepIndex: number,
+  completed: boolean,
+): string {
   const lines = body.split("\n");
   let currentStep = 0;
-  return lines.map(line => {
-    if (line.trim().match(/^[-*]\s*\[[ xX]\]/)) {
-      if (currentStep === stepIndex) {
-        line = line.replace(/\[[ xX]\]/, completed ? "[x]" : "[ ]");
+  return lines
+    .map((line) => {
+      if (line.trim().match(/^[-*]\s*\[[ xX]\]/)) {
+        if (currentStep === stepIndex) {
+          line = line.replace(/\[[ xX]\]/, completed ? "[x]" : "[ ]");
+        }
+        currentStep++;
       }
-      currentStep++;
-    }
-    return line;
-  }).join("\n");
+      return line;
+    })
+    .join("\n");
+}
+
+export async function readPlan(planPath: string): Promise<string> {
+  return fs.readFileSync(planPath, "utf-8");
+}
+
+export async function updatePlanStatus(
+  planPath: string,
+  status: PlanStatus,
+): Promise<void> {
+  const content = fs.readFileSync(planPath, "utf-8");
+  const { data, body } = parseFrontmatter(content);
+  data.status = status;
+  fs.writeFileSync(planPath, stringifyPlan(data, body));
+}
+
+export function checkDependencies(plan: PlanInfo, allPlans: PlanInfo[]) {
+  const unresolved: string[] = [];
+  for (const dep of plan.dependencies) {
+    const found = allPlans.find((p) => p.slug === dep);
+    if (!found || found.status !== "completed") unresolved.push(dep);
+  }
+  return { unresolved };
 }

@@ -42,7 +42,6 @@ Generates random, creative, and unexpected content.
 
 **Input:** \`question\`: Description of random data needed.`;
 
-
 const parameters = Type.Object({
   question: Type.String({
     description: "Description of what random data to generate (no tools)",

@@ -6,7 +6,7 @@ import {
   visibleWidth,
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
-import { TextViewer } from "../components/text-viewer";
+import { TextViewer } from "./components/text-viewer";
 
 interface Skill {
   name: string;

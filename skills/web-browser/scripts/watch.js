@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { connect } from "./cdp.js";
@@ -47,10 +53,9 @@ function compactStack(stackTrace) {
 
 function serializeRemoteObject(obj) {
   if (!obj || typeof obj !== "object") return obj;
-  const value =
-    Object.prototype.hasOwnProperty.call(obj, "value")
-      ? obj.value
-      : obj.unserializableValue || obj.description || null;
+  const value = Object.hasOwn(obj, "value")
+    ? obj.value
+    : obj.unserializableValue || obj.description || null;
   return {
     type: obj.type || null,
     subtype: obj.subtype || null,

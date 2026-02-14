@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn, execSync } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,7 +32,7 @@ execSync("mkdir -p ~/.cache/scraping", { stdio: "ignore" });
 if (useProfile) {
   // Sync profile with rsync (much faster on subsequent runs)
   execSync(
-    `rsync -a --delete "${process.env["HOME"]}/Library/Application Support/Google/Chrome/" ~/.cache/scraping/`,
+    `rsync -a --delete "${process.env.HOME}/Library/Application Support/Google/Chrome/" ~/.cache/scraping/`,
     { stdio: "pipe" },
   );
 }
@@ -42,7 +42,7 @@ spawn(
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   [
     "--remote-debugging-port=9222",
-    `--user-data-dir=${process.env["HOME"]}/.cache/scraping`,
+    `--user-data-dir=${process.env.HOME}/.cache/scraping`,
     "--profile-directory=Default",
     "--disable-search-engine-choice-screen",
     "--no-first-run",
@@ -73,7 +73,10 @@ if (!connected) {
 // Start background watcher for logs/network (detached)
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const watcherPath = join(scriptDir, "watch.js");
-spawn(process.execPath, [watcherPath], { detached: true, stdio: "ignore" }).unref();
+spawn(process.execPath, [watcherPath], {
+  detached: true,
+  stdio: "ignore",
+}).unref();
 
 console.log(
   `✓ Chrome started on :9222${useProfile ? " with your profile" : ""}`,

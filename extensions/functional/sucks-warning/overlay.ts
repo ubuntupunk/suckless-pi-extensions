@@ -1,6 +1,6 @@
 import type { ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
 import { truncateToWidth } from "@mariozechner/pi-tui";
-import { DUMB_ZONE_MESSAGE, OVERLAY_COOLDOWN_MS } from "./constants";
+import { OVERLAY_COOLDOWN_MS } from "./constants";
 import { createThemedBoxRenderer } from "./lib/box-renderer";
 
 // ============================================================================
@@ -129,4 +129,3 @@ class SucksWarningOverlay {
 
   invalidate(): void {}
 }
-

@@ -12,7 +12,6 @@
     "extensions": [
       "extensions/suckless/*.ts",
       "extensions/utility/*/index.ts",
-      "extensions/utility/theme-selector/index.ts",
       "extensions/functional/*/index.ts",
       "extensions/functional/sucks-warning/index.ts",
       "extensions/functional/*.ts"

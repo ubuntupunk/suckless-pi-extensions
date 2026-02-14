@@ -131,8 +131,8 @@ export default function (pi: ExtensionAPI) {
 }
 
 export function registerSystemPromptCommand(pi: ExtensionAPI) {
-  pi.registerCommand("system-prompt", {
-    description: "View the current system prompt",
+  pi.registerCommand("system-prompt:rich", {
+    description: "View the current system prompt with rich formatting",
     handler: async (_args, ctx) => {
       if (!ctx.hasUI) return;
 

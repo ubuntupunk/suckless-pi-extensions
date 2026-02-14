@@ -1,4 +1,5 @@
 import { ToolCallHeader } from "@aliou/pi-utils-ui";
+import { ConfigLoader } from "@aliou/pi-utils-settings";
 import type {
   AgentToolResult,
   ExtensionAPI,
@@ -18,8 +19,27 @@ import { AgentsDiscoveryManager } from "./lib/agents-discovery";
  * Suckless Core Tools
  * 
  * Minimal, indispensable tools that don't belong in heavy extensions.
- * Current: get_current_time, read (directory-aware), terminal-title, agents-discovery
+ * Current: get_current_time, read (directory-aware), terminal-title, agents-discovery, session-naming
  */
+
+// --- Configuration ---
+export interface CoreConfig {
+  agentsIgnorePaths?: string[];
+}
+
+export interface ResolvedCoreConfig {
+  agentsIgnorePaths: string[];
+}
+
+const DEFAULT_CONFIG: ResolvedCoreConfig = {
+  agentsIgnorePaths: [],
+};
+
+export const configLoader = new ConfigLoader<CoreConfig, ResolvedCoreConfig>(
+  "suckless-core",
+  DEFAULT_CONFIG,
+  { scopes: ["global"] },
+);
 
 // --- get_current_time ---
 const GetCurrentTimeParams = Type.Object({
@@ -95,7 +115,9 @@ function emitTitle(pi: ExtensionAPI, title: string) {
   pi.appendEntry(TERMINAL_TITLE_ENTRY, { title });
 }
 
-export default function coreToolsExtension(pi: ExtensionAPI) {
+export default async function coreToolsExtension(pi: ExtensionAPI) {
+  await configLoader.load();
+  const config = configLoader.getConfig();
   const cwd = process.cwd();
 
   // 1. get_current_time tool
@@ -146,7 +168,7 @@ export default function coreToolsExtension(pi: ExtensionAPI) {
   pi.on("session_shutdown", async () => emitTitle(pi, "Terminal"));
 
   // 4. agents-discovery hook
-  const discoveryManager = new AgentsDiscoveryManager();
+  const discoveryManager = new AgentsDiscoveryManager(() => config.agentsIgnorePaths);
   pi.on("session_start", (_e, ctx) => discoveryManager.resetSession(ctx.cwd));
   pi.on("session_switch", (_e, ctx) => discoveryManager.resetSession(ctx.cwd));
   pi.on("tool_result", async (event, ctx) => {
@@ -160,5 +182,21 @@ export default function coreToolsExtension(pi: ExtensionAPI) {
     if (ctx.hasUI) ctx.ui.notify(`Loaded subdirectory context: ${discovered.map(f => discoveryManager.prettyPath(f.path)).join(", ")}`, "info");
     return { content: [...(event.content ?? []), ...additions], details: event.details };
   });
+
+  // 5. session manual naming
+  pi.registerCommand("name", {
+    description: "Set session name manually",
+    handler: async (args, ctx) => {
+      const input = args.trim();
+      if (!input) {
+        const current = pi.getSessionName();
+        ctx.ui.notify(current ? `Session: ${current}` : "Session not named", "info");
+        return;
+      }
+      pi.setSessionName(input);
+      ctx.ui.notify(`Session: ${input}`, "info");
+    }
+  });
 }
+
 

@@ -50,6 +50,7 @@ export function registerThemeCommand(pi: ExtensionAPI) {
       }));
 
       let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let lastAppliedTheme: string = originalTheme.name || "";
 
       let selected: string | null | undefined = await ctx.ui.custom<
         string | null
@@ -59,9 +60,11 @@ export function registerThemeCommand(pi: ExtensionAPI) {
           currentIndex,
           (value) => {
             if (debounceTimer) clearTimeout(debounceTimer);
-            const t = themeMap.get(value);
-            if (t) ctx.ui.setTheme(t);
-            else ctx.ui.setTheme(value);
+            if (value !== lastAppliedTheme) {
+              const t = themeMap.get(value);
+              if (t) ctx.ui.setTheme(t);
+              else ctx.ui.setTheme(value);
+            }
             done(value);
           },
           () => {
@@ -70,12 +73,14 @@ export function registerThemeCommand(pi: ExtensionAPI) {
             done(null);
           },
           (value) => {
+            if (value === lastAppliedTheme) return;
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
+              lastAppliedTheme = value;
               const t = themeMap.get(value);
               if (t) ctx.ui.setTheme(t);
               else ctx.ui.setTheme(value);
-            }, 10);
+            }, 50); // Increased to 50ms for stability
           },
         );
       });

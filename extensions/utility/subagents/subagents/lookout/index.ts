@@ -39,29 +39,21 @@ import type { LookoutDetails, LookoutInput } from "./types";
 export const LOOKOUT_GUIDANCE = `
 ## Lookout - Local Code Search
 
-Use the \`lookout\` tool to find code by functionality or concept in the local codebase.
+Local codebase search by behavior or concept. Uses semantic search + grep/find for discovery.
 
-**When to use:**
-- Locate code by behavior: "Where do we validate JWT tokens?"
-- Find implementations: "Which module handles retry logic?"
-- Understand code flow: "How does the auth flow work?"
+**Use for:**
+- Locating code by behavior: "Where do we validate tokens?"
+- Finding implementations: "Which module handles retries?"
+- Understanding logic flow.
 
-**When NOT to use:**
-- Known file path or existing doc/plan -> use \`read\` directly
-- Simple exact string search -> use \`grep\` directly
-- Planning, strategy, or request for an implementation plan -> use \`oracle\`
-- External/web research -> use \`scout\` instead
+**Do NOT use for:**
+- Known file paths (use \`read\`).
+- Simple string searches (use \`grep\`).
+- Architecture/Planning (use \`oracle\`).
+- Web/GitHub research (use \`scout\`).
 
-**Example:**
-\`\`\`json
-{ "query": "Where is the database connection pool configured?" }
-\`\`\`
+**Example:** \`{ "query": "Where is the database connection pool configured?" }\``;
 
-**Custom directory:** Pass \`cwd\` to search a specific directory instead of the current project:
-\`\`\`json
-{ "query": "auth implementation", "cwd": "/path/to/other/project" }
-\`\`\`
-`;
 
 const parameters = Type.Object({
   query: Type.String({

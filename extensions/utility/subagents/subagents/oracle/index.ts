@@ -36,32 +36,20 @@ import type { OracleDetails, OracleInput } from "./types";
 export const ORACLE_GUIDANCE = `
 ## Oracle
 
-Use oracle when making plans, reviewing your own work, understanding existing code behavior, or debugging code that does not work.
+Advisory subagent for architecture, reviews, and complex planning.
 
-When calling oracle, tell the user why: "I'm going to ask the oracle for advice" or "I need to consult with the oracle."
+**Use for:**
+- Architectural reviews and advice.
+- Planning complex refactors.
+- Debugging subtle logic or race conditions.
 
-### Oracle Examples
+**Do NOT use for:**
+- Simple file reading (use \`read\`).
+- Codebase searches (use \`lookout\`).
+- Implementation (do it yourself or use \`worker\`).
 
-**Architecture review:**
-- User: "review the authentication system we just built"
-- Action: use oracle with relevant files to analyze architecture, then improve based on response
+**Example:** \`{ "task": "plan implementation of real-time collab", "files": ["src/auth.ts"] }\``;
 
-**Debugging:**
-- User: "I'm getting race conditions when I run this test"
-- Action: run test to confirm, then use oracle with files and context about test run and race condition
-
-**Planning:**
-- User: "plan the implementation of real-time collaboration features"
-- Action: use lookout to locate relevant files, then use oracle to plan implementation
-
-**Implementation guidance:**
-- User: "implement a new user authentication system with JWT tokens"
-- Action: use oracle to analyze current patterns and plan approach, then proceed with implementation
-
-**Optimization:**
-- User: "I need to optimize this slow database query"
-- Action: use oracle to analyze performance issues and get recommendations, then implement
-`;
 
 const parameters = Type.Object({
   task: Type.String({ description: "What to help with" }),

@@ -46,37 +46,24 @@ import type { WorkerDetails, WorkerInput } from "./types";
 export const WORKER_GUIDANCE = `
 ## Worker
 
-Delegate implementation work to the worker instead of doing it yourself when the task is well-defined and the files are known. The worker is a focused implementation agent: it reads, edits, writes files and runs verification commands. It is sandboxed to the files you provide.
+Sandboxed implementation subagent for well-defined tasks on specific files.
 
-**You SHOULD delegate to the worker when:**
-- You already know which files need to change and what the change is
-- The task is implementation, not exploration or planning
-- Examples: migrating files to TypeScript, adding documentation, adding error handling, applying a refactoring pattern, fixing a known bug in specific files
+**Use for:**
+- File migrations or refactors.
+- Adding documentation/types.
+- Fixing known bugs in specific files.
 
-**You should NOT delegate to the worker when:**
-- You need to explore or search the codebase first (use lookout or scout)
-- The scope is unclear or you don't know which files are involved
-- The task is architectural planning (use oracle)
+**Do NOT use for:**
+- Codebase exploration/search (use \`lookout\` or \`scout\`).
+- Architectural planning (use \`oracle\`).
 
 **Inputs:**
-- \`task\`: Short description (~50 chars, for display only, not sent to the worker)
-- \`instructions\`: Full instructions for the worker (be specific and complete)
-- \`files\`: Array of file paths the worker should operate on
-- \`context\`: Optional background info (e.g., patterns to follow, constraints)
-- \`skills\`: Optional skill names for specialized context
+- \`task\`: Description for display.
+- \`instructions\`: Precise execution steps.
+- \`files\`: Targeted file paths.
 
-**After the worker completes:** Review its output yourself. If the worker did not run verification (e.g., typecheck, tests, lint), do it yourself and fix any issues.
+*Note: The worker reads, edits, writes, and runs bash for verification.*`;
 
-**Example:**
-\`\`\`json
-{
-  "task": "Convert helpers.js to TypeScript",
-  "instructions": "Convert this file from JavaScript to TypeScript. Add proper type annotations for all function parameters and return types. Use generics where appropriate.",
-  "files": ["src/utils/helpers.js"],
-  "context": "Follow the typing patterns used in src/utils/types.ts"
-}
-\`\`\`
-`;
 
 const parameters = Type.Object({
   task: Type.String({

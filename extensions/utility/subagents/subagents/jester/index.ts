@@ -29,21 +29,19 @@ import type { JesterDetails, JesterInput } from "./types";
 export const JESTER_GUIDANCE = `
 ## Jester
 
-Use jester when you need to generate random data, creative content, or unexpected outputs.
+Generates random, creative, and unexpected content.
 
-**When to use:**
-- Generating lists of random names, sentences, or text
-- Creating placeholder data or test fixtures
-- Brainstorming unusual ideas
-- Producing varied, creative content
+**Use for:**
+- Generating random names, placeholder data, or text.
+- Brainstorming creative or varied ideas.
 
-**When NOT to use:**
-- Anything requiring web research, up-to-date facts, or codebase inspection
-- Deterministic or factual outputs
+**Do NOT use for:**
+- Web research or facts.
+- Codebase inspection.
+- Deterministic/factual outputs.
 
-**Input:**
-- \`question\`: description of what random data to generate
-`;
+**Input:** \`question\`: Description of random data needed.`;
+
 
 const parameters = Type.Object({
   question: Type.String({

@@ -61,55 +61,25 @@ import type { ScoutDetails, ScoutInput } from "./types";
 export const SCOUT_GUIDANCE = `
 ## Scout
 
-Use scout for web research and GitHub codebase exploration. It can fetch URLs, search the web, and deeply explore GitHub repositories.
+Web research and GitHub exploration subagent. Analyze URLs, search web, and explore repositories deeply (structure, commits, issues, PRs, diffs).
 
-**When to use:**
-- Fetching content from URLs (articles, documentation, webpages)
-- Searching the web for information
-- Exploring GitHub repositories (code, structure, commits, issues, PRs)
-- Understanding how open-source projects work
-- Finding implementations across codebases
-- Analyzing code evolution through commit history
+**Use for:**
+- Fetching documentation/articles from URLs.
+- Global search for patterns across GitHub.
+- Understanding code evolution and PR context.
 
-**When NOT to use:**
-- Local codebase search (use lookout instead)
-- Testing API endpoints (use curl instead)
-- Making POST/PUT/DELETE requests
+**Do NOT use for:**
+- Local code search (use lookout).
+- API testing (use curl).
 
 **Inputs:**
-- \`url\`: Specific URL to fetch
-- \`query\`: Search query for web or GitHub research
-- \`repo\`: GitHub repository to focus on (owner/repo format)
-- \`prompt\`: Question to answer based on fetched content
+- \`url\`: Specific URL to fetch.
+- \`query\`: Web/GitHub search query.
+- \`repo\`: Repository to focus on (\`owner/repo\`).
+- \`prompt\`: Analysis goal.
 
-At least one of url, query, or repo is required.
+*Note: Use Scout for analysis; use linkup tools for raw markdown.*`;
 
-**Note:** Scout always provides LLM-analyzed responses. For raw markdown content without analysis, use the \`web_fetch\` tool instead.
-
-**Examples:**
-- Fetch a URL: \`{ url: "https://example.com/docs", prompt: "What is the API rate limit?" }\`
-- Web search: \`{ query: "typescript best practices 2025", prompt: "Summarize the top 3 practices" }\`
-- Explore repo: \`{ repo: "facebook/react", prompt: "how is useState implemented?" }\`
-- GitHub search: \`{ query: "useState implementation", repo: "facebook/react", prompt: "explain the implementation" }\`
-- Issue/PR: \`{ url: "https://github.com/owner/repo/issues/123", prompt: "what is the current status?" }\`
-
-**Repository mappings:**
-Some npm packages are published under a different owner than the actual GitHub repository:
-- All repositories starting with \`mariozechner/pi-*\` are located in \`badlogic/pi-mono\` monorepo
-
-When you need to research a package like \`@mariozechner/pi-coding-agent\` or \`@mariozechner/pi-tui\`, use \`badlogic/pi-mono\` as the repository and search within the monorepo for the relevant package code.
-
-**GitHub capabilities:**
-- Read files and list directories
-- Search code across repositories
-- Search commits by message, author, or path
-- View commit diffs
-- List/filter issues and PRs in a repository
-- Fetch individual issues and PRs with comments
-- View PR diffs (changed files with patches)
-- View PR reviews and inline code comments
-- Compare branches, tags, or commits
-`;
 
 const parameters = Type.Object({
   url: Type.Optional(

@@ -40,21 +40,20 @@ import type { ReviewerDetails, ReviewerInput } from "./types";
 export const REVIEWER_GUIDANCE = `
 ## Reviewer
 
-Use reviewer for fast, high-signal code review feedback on diffs. It acts like a senior reviewer: calls out risks, correctness issues, test gaps, and maintainability concerns.
+Fast, high-signal code review feedback on diffs. Acts as a senior reviewer.
 
 **Inputs:**
-- \`diff\`: Freeform description of what to review (e.g., "staged changes", "last commit", "changes in src/auth/")
-- \`focus\`: Optional focus area (security, performance, style, general)
-- \`context\`: Optional description of the change intent
+- \`diff\`: Description of review scope (e.g., "staged changes", "last commit").
+- \`focus\`: Optional area (security, performance, style, general).
+- \`context\`: Optional intent of the change.
 
 **Behavior:**
-- Parse \`diff\` to determine the right git diff command
-- Only flag issues introduced in the diff
-- Avoid nitpicks unless style-only feedback requested
+- Runs appropriate \`git diff\` command.
+- Flags only new issues.
+- Avoids nitpicks unless requested.
 
-**Output format:**
-Summary, Findings with [P0-P3], Verdict.
-`;
+**Output:** Summary, P0-P3 Findings, Verdict.`;
+
 
 const parameters = Type.Object({
   diff: Type.String({

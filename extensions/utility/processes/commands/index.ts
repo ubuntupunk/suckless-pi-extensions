@@ -163,46 +163,48 @@ export function setupProcessesCommands(
   });
 
   // ── /process:logs [id|name] ────────────────────────────────────────
+  async function showLogsHandler(args: string, ctx: ExtensionCommandContext) {
+    const arg = args.trim();
+
+    let processId: string | undefined;
+
+    if (arg) {
+      const proc = manager.find(arg);
+      if (!proc) {
+        ctx.ui.notify(`Process not found: ${arg}`, "error");
+        return;
+      }
+      processId = proc.id;
+    } else {
+      // No argument: show picker.
+      processId = await pickProcess(ctx, manager, "Select process for logs");
+      if (!processId) return;
+    }
+
+    const logFiles = manager.getLogFiles(processId);
+    const proc = manager.get(processId);
+    if (!logFiles || !proc) {
+      ctx.ui.notify(`Process not found: ${processId}`, "error");
+      return;
+    }
+
+    ctx.ui.notify(
+      `${proc.name} (${proc.id})\nstdout: ${logFiles.stdoutFile}\nstderr: ${logFiles.stderrFile}`,
+      "info",
+    );
+  }
+
   pi.registerCommand("process:logs", {
     description: "Show log file paths for a process",
     getArgumentCompletions: allProcessCompletions(manager),
-    handler: async (args, ctx) => {
-      const arg = args.trim();
-
-      let processId: string | undefined;
-
-      if (arg) {
-        const proc = manager.find(arg);
-        if (!proc) {
-          ctx.ui.notify(`Process not found: ${arg}`, "error");
-          return;
-        }
-        processId = proc.id;
-      } else {
-        // No argument: show picker.
-        processId = await pickProcess(ctx, manager, "Select process for logs");
-        if (!processId) return;
-      }
-
-      const logFiles = manager.getLogFiles(processId);
-      const proc = manager.get(processId);
-      if (!logFiles || !proc) {
-        ctx.ui.notify(`Process not found: ${processId}`, "error");
-        return;
-      }
-
-      ctx.ui.notify(
-        `${proc.name} (${proc.id})\nstdout: ${logFiles.stdoutFile}\nstderr: ${logFiles.stderrFile}`,
-        "info",
-      );
-    },
+    handler: showLogsHandler,
   });
 
   // Alias /logs to /process:logs
   pi.registerCommand("logs", {
     description: "Show log file paths for a process (alias for /process:logs)",
     getArgumentCompletions: allProcessCompletions(manager),
-    handler: (args, ctx) => pi.executeCommand(`process:logs ${args}`, ctx),
+    handler: showLogsHandler,
   });
 
   // ── /process:kill [id|name] ────────────────────────────────────────

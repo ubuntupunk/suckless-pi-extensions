@@ -25,7 +25,7 @@ Sovereignty in our coding environment is the transition from being a consumer of
 | **Functional** | `guardrails` | Security: AST-based permission gates for dangerous commands and .env protection. |
 | **Functional** | `files-widget` | Navigation: High-fidelity TUI file browser and viewer via `/browse`. |
 | **Functional** | `sucks-warning` | Quality Control: Automated detection of "slop" patterns and context exhaustion. |
-| **Functional** | `planning` | Structure: Visualizing and tracking long-term implementation plans. |
+| **Functional** | `planning` | Structure: Visualizing and tracking long-term plans via `/plans:list` and `ask_structured_decision`. |
 
 ## The Road Ahead
 - **Audit Subagents**: Strip complex prompts and logic to their bare essentials.

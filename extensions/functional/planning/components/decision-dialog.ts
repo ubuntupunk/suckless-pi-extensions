@@ -7,10 +7,27 @@ import {
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
 import type { Static } from "@sinclair/typebox";
-import type { AskUserQuestionParams } from "./schema";
-import type { Answer, AskUserQuestionDetails, Question } from "./types";
 
-type Params = Static<typeof AskUserQuestionParams>;
+export interface Question {
+  question: string;
+  header: string;
+  multiSelect: boolean;
+  options: Array<{ label: string; description: string }>;
+}
+
+export interface Answer {
+  question: string;
+  header: string;
+  selections: string[];
+}
+
+export interface AskUserQuestionDetails {
+  questions: Question[];
+  answers: Answer[];
+  error?: string;
+}
+
+type Params = { questions: Question[] };
 
 interface ExecuteResult {
   content: Array<{ type: "text"; text: string }>;

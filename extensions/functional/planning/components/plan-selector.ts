@@ -7,7 +7,7 @@ import {
   truncateToWidth,
   visibleWidth,
 } from "@mariozechner/pi-tui";
-import type { PlanInfo } from "./types";
+import type { PlanInfo } from "../core";
 
 export interface ArchiveResult {
   ok: boolean;

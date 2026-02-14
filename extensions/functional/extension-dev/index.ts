@@ -1,8 +1,13 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { registerCommands } from "./commands";
-import { setupTools } from "./tools";
+import { setupExtensionDevTools, setupUpdateCommand } from "./core";
 
-export default function (pi: ExtensionAPI) {
-  setupTools(pi);
-  registerCommands(pi);
+/**
+ * Extension Development Tools
+ * 
+ * Provides tools for Pi extension developers: version detection,
+ * changelog reading, documentation discovery, and package manager detection.
+ */
+export default function extensionDevExtension(pi: ExtensionAPI) {
+  setupExtensionDevTools(pi);
+  setupUpdateCommand(pi);
 }

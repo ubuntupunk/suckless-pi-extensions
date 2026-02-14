@@ -4,22 +4,16 @@ import { ThemeSelector } from "./components/theme-selector";
 
 export default function (pi: ExtensionAPI) {
   registerThemeCommand(pi);
-  pi.on("session_start", async (_event, ctx) => {
-    if (ctx.hasUI) {
-      ctx.ui.notify("Theme selector extension active", "info");
-    }
-  });
   pi.registerCommand("theme_test", {
     description: "Test if theme selector extension is loaded",
     handler: async (_args, ctx) => {
-      console.log("theme_test command executed");
       ctx.ui.notify("Theme selector extension is LOADED", "info");
     },
   });
 }
 
 export function registerThemeCommand(pi: ExtensionAPI) {
-  pi.registerCommand("theme", {
+  pi.registerCommand("themer", {
     description: "Select theme with preview",
     handler: async (_args, ctx) => {
       const allThemes = ctx.ui.getAllThemes();

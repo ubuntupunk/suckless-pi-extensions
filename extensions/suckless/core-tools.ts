@@ -224,42 +224,12 @@ export default async function coreToolsExtension(pi: ExtensionAPI) {
     };
   });
 
-  // 5. session manual naming
-  pi.registerCommand("name", {
-    description: "Set session name manually",
-    handler: async (args, ctx) => {
-      const input = args.trim();
-      if (!input) {
-        const current = pi.getSessionName();
-        ctx.ui.notify(
-          current ? `Session: ${current}` : "Session not named",
-          "info",
-        );
-        return;
-      }
-      pi.setSessionName(input);
-      ctx.ui.notify(`Session: ${input}`, "info");
-    },
-  });
+  // 5. session manual naming (removed fallback as it conflicts with built-in)
 
   pi.registerCommand("core_test", {
     description: "Test if core tools extension is loaded",
     handler: async (_args, ctx) => {
       ctx.ui.notify("Core tools extension is LOADED", "info");
-    },
-  });
-
-  // Fallback /theme command in core to debug loading issues
-  pi.registerCommand("theme:core", {
-    description: "Select theme (core fallback)",
-    handler: async (_args, ctx) => {
-      const allThemes = ctx.ui.getAllThemes();
-      const themeNames = allThemes.map((t) => t.name);
-      const selected = await ctx.ui.select("Select theme (core)", themeNames);
-      if (selected) {
-        ctx.ui.setTheme(selected);
-        ctx.ui.notify(`Theme set to: ${selected}`, "info");
-      }
     },
   });
 }

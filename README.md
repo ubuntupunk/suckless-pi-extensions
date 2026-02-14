@@ -1,37 +1,30 @@
-# Suckless Pi: Thoughts on an Open Source Supply Chain
+# Suckless Pi: A Sovereign Coding Environment
 
-## 1. Safety: The Prompt Injection Surface
-The primary risk in the current Pi ecosystem is that **extensions are not just code; they are system instructions.** 
-- **Vulnerability**: Every time we pull a 3rd-party extension, we are adding a "voice" to the agent's internal monologue. A malicious or poorly written extension could contain "Instruction Injection"—hidden prompts that steer the agent to leak environment variables, overwrite `.ssh/authorized_keys`, or exfiltrate data via `curl`.
-- **The Suckless Approach**: Safety through visibility. A "suckless" extension should be small enough to be audited in a single sitting. If you can't read the whole source in 5 minutes, it’s too bloated to be safe.
+## Sovereignty
+Sovereignty in our coding environment is the transition from being a consumer of bloated, opaque extensions to being the **architect of our own tools**. It means vendoring our dependencies, auditing every line of logic that steers our agent, and prioritizing "suckless" principles: simplicity, clarity, and frugality. By owning the code that runs our agent, we eliminate "instruction drift," "vulnerability injection," and "workflow rot." This repository is our single source of truth — a curated, local-first stack where every tool is included for a reason, and every reason is aligned with the craft of coding.
 
-## 2. Control: Moving from "Hacks" to "Personal Stacks"
-We have already encountered the "Extension Conflict" problem. As we add more tools, namespaces like `/review` or `/files` become contested territory.
-- **The Issue**: Relying on upstream `main` branches makes us "consumers" who are vulnerable to "breaking updates" or "instruction drift."
-- **The Strategy**: 
-    - **Local-First Curation**: Instead of tracking 20 disparate repos, we should consolidate our preferred tools into a **Personal Pi Package**. 
-    - **Vetting over Updating**: We treat the supply chain like a library of parts, not a stream of updates. We "cherry-pick" features from the community, rename them to fit our workflow (e.g., `tui-review` vs `review`), and pin them.
-    - **Ownership**: The move to local paths in `settings.json` is the first step toward a sovereign coding environment.
+## Repository Map & Curated Stack
 
-## 3. The Way Forward: Elegance without Ego
-How do we contribute to the ecosystem without getting bogged down in "PR politics" or hurting feelings?
-- **Maximize Elegance & Efficiency**: If an upstream repo is "messy," don't try to fix their world. Fork it, strip it to the bare essentials (the "suckless" version), and use it.
-- **Upstream Etiquette**: Send "General Utility" fixes upstream (bug fixes, performance). Keep "Workflow Opinions" (specific command names, UI preferences) in the personal fork.
-- **Code as Art**: Avoid the "Bloat-Cycle." If a feature requires three new npm dependencies, ask if it can be done with a simple bash script or a native Node.js call.
+| Category | Extension / Tool | Reason for Inclusion |
+| :--- | :--- | :--- |
+| **Suckless** | `status-bar.ts` | Minimal, stable session info without TUI bloat. |
+| **Suckless** | `core-tools.ts` | Essential primitives: Time, Breadcrumb Titles, and Directory-Aware Read. |
+| **Utility** | `introspection` | Transparency: View exactly what the agent knows (Context, Tools, Skills). |
+| **Utility** | `neovim` | Editor Awareness: Deep integration with LSP and buffer context. |
+| **Utility** | `processes` | Asynchronous Velocity: Manage background tasks without blocking chat. |
+| **Utility** | `breadcrumbs` | Context Navigation: Handoff work between sessions to avoid context bloat. |
+| **Utility** | `subagents` | Specialized Intelligence: Scout (research), Oracle (planning), Worker (execution). |
+| **Utility** | `providers` | Supply Chain Visibility: Real-time rate-limit and usage tracking. |
+| **Utility** | `presenter` | AV Layer: Terminal titles, Linux-compatible notifications, and audio alerts. |
+| **Utility** | `session-naming` | Organization: Human-readable auto-titling for conversation history. |
+| **Utility** | `theme-selector` | Aesthetics: Interactive `/theme` command with live preview. |
+| **Utility** | `notification-hook` | Situational Awareness: Audio-visual cues for turn completion and user input requests. |
+| **Functional** | `guardrails` | Security: AST-based permission gates for dangerous commands and .env protection. |
+| **Functional** | `files-widget` | Navigation: High-fidelity TUI file browser and viewer. |
+| **Functional** | `sucks-warning` | Quality Control: Automated detection of "slop" patterns and context exhaustion. |
+| **Functional** | `planning` | Structure: Visualizing and tracking long-term implementation plans. |
 
-## 4. Afternote: From "Shit Coder" to "Suckless"
-The current moniker **"Shit Coder"** is a badge of honor for functional velocity—it implies "I don't care if the code is pretty, as long as it works." While this is great for prototyping, it eventually hits a ceiling of technical debt.
-
-**Why "Suckless" is the logical evolution:**
-The [Suckless Project](https://suckless.org/) (creators of `dwm`, `st`, and `dmenu`) champions the idea that software should be simple, clear, and frugal. 
-- **The Motivation**: "Shit coding" is about the *output*. "Suckless coding" is about the *craft*. 
-- **The Homage**: Just as `st` (suckless terminal) stripped away the bloat of modern terminal emulators, "Suckless Pi" should strip away the bloat of "AI-generated boilerplate."
-
-### Suggested Alternatives to "Shit Coder":
-If "Suckless" feels too aggressive or niche, we could consider:
-1. **Pi-Artisan**: Implies hand-tooled, high-quality curation.
-2. **Core-Pi**: Focuses on the minimal, indispensable set of tools.
-3. **Lean-Pi**: Focuses on performance and the removal of waste.
-4. **Prime-Pi**: The "Gold Standard" version of your local setup.
-
-**Verdict**: "Suckless" remains the strongest choice for those who value the philosophy of "Code is a liability; keep it minimal."
+## The Road Ahead
+- **Audit Subagents**: Strip complex prompts and logic to their bare essentials.
+- **Suckless Refactoring**: Gradually move "Functional" items to "Suckless" by reducing their dependency footprint.
+- **Custom Tooling**: Build tailored solutions that solve *our* specific workflow problems, not the "general case."

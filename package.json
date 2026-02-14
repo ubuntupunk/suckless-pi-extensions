@@ -7,12 +7,26 @@
   "author": "ubuntupunk",
   "license": "MIT",
   "pi": {
-    "extensions": ["extensions/*.ts", "extensions/*/index.ts"],
+    "extensions": [
+      "extensions/suckless/*.ts",
+      "extensions/utility/*/index.ts",
+      "extensions/functional/*/index.ts",
+      "extensions/functional/sucks-warning/index.ts",
+      "extensions/functional/*.ts"
+    ],
     "skills": ["skills/"],
-    "prompts": ["prompts/"]
+    "prompts": ["prompts/"],
+    "themes": ["themes/*.json"]
   },
   "dependencies": {
     "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*"
+    "@mariozechner/pi-tui": "*",
+    "@aliou/sh": "^0.1.0",
+    "@aliou/pi-utils-settings": "^0.2.0",
+    "@sinclair/typebox": "^0.34.41",
+    "@aliou/sesame": "^0.4.0",
+    "better-sqlite3": "^12.6.2",
+    "yaml": "^2.8.2",
+    "@aliou/pi-linkup": "^0.7.1"
   }
 }

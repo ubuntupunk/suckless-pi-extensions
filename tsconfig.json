@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@aliou/pi-utils-ui": ["packages/ui/index.ts"],
+      "@aliou/pi-utils-settings": ["packages/settings/index.ts"],
+      "@aliou/pi-agent-kit": ["packages/agent-kit/index.ts"]
+    }
+  }
+}

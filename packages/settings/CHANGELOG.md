@@ -1,0 +1,33 @@
+# @aliou/pi-utils-settings
+
+## 0.3.0
+
+### Minor Changes
+
+- 756552a: Add FuzzySelector component for picking one item from a large list using fuzzy search. Refresh sections after cycling value changes so dependent settings update immediately.
+
+## 0.2.1
+
+### Patch Changes
+
+- b79b592: Fix search filter to match on section labels, not just item labels. When a section label matches the query, all items in that section are shown.
+
+## 0.2.0
+
+### Minor Changes
+
+- 06e7e0c: Add flexible scope system with memory support
+
+  - Add `Scope` type (`global`, `local`, `memory`)
+  - Add `scopes` constructor option to ConfigLoader (default: `["global", "local"]`)
+  - Walk up directory tree to find `.pi` for local config
+  - Memory scope: ephemeral, not persisted, resets on reload
+  - Dynamic tabs in settings command based on enabled scopes
+  - Add `isInherited()` helper for memory tab display
+  - Add `hasScope()`, `getEnabledScopes()` to ConfigStore interface
+
+## 0.1.0
+
+### Minor Changes
+
+- 6432484: Initial release: ConfigLoader with migrations and afterMerge hook, registerSettingsCommand with Local/Global tabs and draft-based Ctrl+S save, SectionedSettings, ArrayEditor, and helpers.

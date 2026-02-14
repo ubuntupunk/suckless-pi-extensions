@@ -18,11 +18,12 @@ Sovereignty in our coding environment is the transition from being a consumer of
 | **Utility** | `subagents` | Specialized Intelligence: Scout (research), Oracle (planning), Worker (execution). |
 | **Utility** | `providers` | Supply Chain Visibility: Real-time rate-limit and usage tracking. |
 | **Utility** | `presenter` | AV Layer: Terminal titles, Linux-compatible notifications, and audio alerts. |
+| **Utility** | `review-tools` | Specialized commands: `/tui-review` and `/tui-diff` for change analysis. |
 | **Utility** | `session-naming` | Organization: Human-readable auto-titling for conversation history. |
 | **Utility** | `theme-selector` | Aesthetics: Interactive `/theme` command with live preview. |
 | **Utility** | `notification-hook` | Situational Awareness: Audio-visual cues for turn completion and user input requests. |
 | **Functional** | `guardrails` | Security: AST-based permission gates for dangerous commands and .env protection. |
-| **Functional** | `files-widget` | Navigation: High-fidelity TUI file browser and viewer. |
+| **Functional** | `files-widget` | Navigation: High-fidelity TUI file browser and viewer via `/browse`. |
 | **Functional** | `sucks-warning` | Quality Control: Automated detection of "slop" patterns and context exhaustion. |
 | **Functional** | `planning` | Structure: Visualizing and tracking long-term implementation plans. |
 

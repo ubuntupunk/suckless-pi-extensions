@@ -32,7 +32,11 @@
       "extensions/functional/guardrails/index.ts",
       "extensions/functional/files-widget/index.ts",
       "extensions/functional/planning/index.ts",
-      "extensions/functional/sucks-warning/index.ts"
+      "extensions/functional/sucks-warning/index.ts",
+      "extensions/functional/memory-mode.ts",
+      "extensions/functional/ralph-loop.ts",
+      "extensions/suckless/session-emoji.ts",
+      "extensions/utility/checkpoint/index.ts"
     ],
     "skills": [
       "skills/"
@@ -47,6 +51,7 @@
   "dependencies": {
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-tui": "*",
+    "@mariozechner/pi-ai": "*",
     "@aliou/sh": "^0.1.0",
     "@aliou/pi-utils-settings": "*",
     "@aliou/pi-utils-ui": "*",

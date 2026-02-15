@@ -99,7 +99,7 @@ function capSavedContent(text: string): string {
 function truncateText(text: string, maxChars: number): string {
   const normalized = text.replace(/\s+$/g, "").trim();
   if (normalized.length <= maxChars) return normalized;
-  return normalized.slice(0, Math.max(0, maxChars - 1)).trimEnd() + "…";
+  return `${normalized.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
 // Brave treats quoted queries strictly and can return empty results
@@ -362,7 +362,7 @@ function makeTurndownService(): TurndownService {
 
   const getExt = (node: any): string => {
     const firstTag = (element: Element) =>
-      element.outerHTML.split(">", 1)[0] + ">";
+      `${element.outerHTML.split(">", 1)[0]}>`;
 
     const match = node?.outerHTML?.match(/(highlight-source-|language-)[a-z]+/);
     if (match) return match[0].split("-").pop() ?? "";
@@ -375,7 +375,7 @@ function makeTurndownService(): TurndownService {
     if (parent) return parent[0].split("-").pop() ?? "";
 
     const inner = node?.innerHTML
-      ? (node.innerHTML.split(">", 1)[0] + ">").match(
+      ? `${node.innerHTML.split(">", 1)[0]}>`.match(
           /(highlight-source-|language-)[a-z]+/,
         )
       : null;

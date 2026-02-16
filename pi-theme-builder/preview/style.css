@@ -1,0 +1,119 @@
+:root {
+  /* Core UI */
+  --accent: #3584e4;
+  --border: #888888;
+  --borderAccent: #3584e4;
+  --borderMuted: #555555;
+  --success: #44ff44;
+  --error: #ff4444;
+  --warning: #ffff00;
+  --muted: #888888;
+  --dim: rgb(59.5, 59.5, 59.5);
+  --text: ""; /* Default terminal text */
+  --thinkingText: #888888;
+  /* Backgrounds & Content */
+  --selectedBg: rgb(144.643153527, 143.7385892116, 148.2614107884);
+  --userMessageBg: #77767b;
+  --userMessageText: "";
+  --customMessageBg: #77767b;
+  --customMessageText: "";
+  --customMessageLabel: #3584e4;
+  --toolPendingBg: rgb(112.4, 119.4, 133.5);
+  --toolSuccessBg: rgb(113.9, 131.7, 117.5);
+  --toolErrorBg: rgb(132.6, 113, 117.5);
+  --toolTitle: #3584e4;
+  --toolOutput: "";
+  /* Markdown */
+  --mdHeading: #3584e4;
+  --mdLink: #3584e4;
+  --mdLinkUrl: #888888;
+  --mdCode: #00ffff;
+  --mdCodeBlock: "";
+  --mdCodeBlockBorder: #888888;
+  --mdQuote: #888888;
+  --mdQuoteBorder: #888888;
+  --mdHr: #888888;
+  --mdListBullet: #00ffff;
+  /* Tool Diffs */
+  --toolDiffAdded: #44ff44;
+  --toolDiffRemoved: #ff4444;
+  --toolDiffContext: #888888;
+  /* Syntax Highlighting */
+  --syntaxComment: #6a9955;
+  --syntaxKeyword: #c586c0;
+  --syntaxFunction: #dcdcaa;
+  --syntaxVariable: #9cdcfe;
+  --syntaxString: #ce9178;
+  --syntaxNumber: #b5cea8;
+  --syntaxType: #4ec9b0;
+  --syntaxOperator: #d4d4d4;
+  --syntaxPunctuation: #d4d4d4;
+  /* Thinking Levels (Borders) */
+  --thinkingOff: #888888;
+  --thinkingMinimal: #3584e4;
+  --thinkingLow: #00aaff;
+  --thinkingMedium: #00ffff;
+  --thinkingHigh: #ff00ff;
+  --thinkingXhigh: #ff0000;
+  /* Modes */
+  --bashMode: #ffaa00;
+}
+
+body {
+  background-color: #000;
+  color: #ccc;
+  font-family: "Consolas", "Monaco", monospace;
+  padding: 20px;
+}
+
+.pi-interface {
+  border: 1px solid var(--border);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  border-bottom: 1px solid var(--borderMuted);
+  padding: 10px;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.messages {
+  padding: 20px;
+}
+
+.msg-user {
+  background-color: var(--userMessageBg);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--border);
+}
+
+.msg-assistant {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.tool-block {
+  background-color: var(--toolPendingBg);
+  border: 1px solid var(--borderMuted);
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.thinking {
+  border-left: 2px solid var(--thinkingLow);
+  padding-left: 10px;
+  color: var(--thinkingText);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.editor {
+  border-top: 1px solid var(--thinkingOff);
+  padding: 10px;
+  color: var(--text);
+  /* Simulate the thinking border changing */
+  border-color: var(--thinkingMinimal);
+}

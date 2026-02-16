@@ -1,0 +1,146 @@
+@use "sass:color";
+
+// src/theme.scss
+
+// --- 1. PALETTE DEFINITION (Your Playground) ---
+$bg-dark: #77767b;
+$bg-light: #9141ac;
+
+// Suggestions: Use SCSS functions to generate harmonious colors
+$primary: #3584e4;
+$primary-dim: color.mix($primary, $bg-dark, 20%);
+$secondary: #888888;
+$error: #ff4444;
+$success: #44ff44;
+
+// --- 2. PI THEME MAPPING ---
+// We map SCSS vars to CSS custom properties. 
+// The Builder script scrapes these properties to make the JSON.
+
+:root {
+  /* Core UI */
+  --accent: #{$primary};
+  --border: #{$secondary};
+  --borderAccent: #{$primary};
+  --borderMuted: #{color.adjust($secondary, $lightness: -20%)};
+  --success: #{$success};
+  --error: #{$error};
+  --warning: #ffff00;
+  --muted: #{$secondary};
+  --dim: #{color.adjust($secondary, $lightness: -30%)};
+  --text: ""; /* Default terminal text */
+  --thinkingText: #{$secondary};
+
+  /* Backgrounds & Content */
+  --selectedBg: #{color.adjust($bg-dark, $lightness: 10%)};
+  --userMessageBg: #{$bg-dark};
+  --userMessageText: "";
+  --customMessageBg: #{$bg-dark};
+  --customMessageText: "";
+  --customMessageLabel: #{$primary};
+  --toolPendingBg: #{color.mix($primary, $bg-dark, 10%)};
+  --toolSuccessBg: #{color.mix($success, $bg-dark, 10%)};
+  --toolErrorBg: #{color.mix($error, $bg-dark, 10%)};
+  --toolTitle: #{$primary};
+  --toolOutput: "";
+
+  /* Markdown */
+  --mdHeading: #{$primary};
+  --mdLink: #{$primary};
+  --mdLinkUrl: #{$secondary};
+  --mdCode: #00ffff;
+  --mdCodeBlock: "";
+  --mdCodeBlockBorder: #{$secondary};
+  --mdQuote: #{$secondary};
+  --mdQuoteBorder: #{$secondary};
+  --mdHr: #{$secondary};
+  --mdListBullet: #00ffff;
+
+  /* Tool Diffs */
+  --toolDiffAdded: #{$success};
+  --toolDiffRemoved: #{$error};
+  --toolDiffContext: #{$secondary};
+
+  /* Syntax Highlighting */
+  --syntaxComment: #6a9955;
+  --syntaxKeyword: #c586c0;
+  --syntaxFunction: #dcdcaa;
+  --syntaxVariable: #9cdcfe;
+  --syntaxString: #ce9178;
+  --syntaxNumber: #b5cea8;
+  --syntaxType: #4ec9b0;
+  --syntaxOperator: #d4d4d4;
+  --syntaxPunctuation: #d4d4d4;
+
+  /* Thinking Levels (Borders) */
+  --thinkingOff: #{$secondary};
+  --thinkingMinimal: #{$primary};
+  --thinkingLow: #00aaff;
+  --thinkingMedium: #00ffff;
+  --thinkingHigh: #ff00ff;
+  --thinkingXhigh: #ff0000;
+
+  /* Modes */
+  --bashMode: #ffaa00;
+}
+
+// --- 3. PREVIEW STYLES (Only for the HTML viewer) ---
+body {
+  background-color: var(--userMessageBg); /* Updated to use theme variable */
+  color: var(--text);
+  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.pi-interface {
+  border: 1px solid var(--border);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  border-bottom: 1px solid var(--borderMuted);
+  padding: 10px;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.messages {
+  padding: 20px;
+}
+
+.msg-user {
+  background-color: var(--userMessageBg);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--border);
+}
+
+.msg-assistant {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.tool-block {
+  background-color: var(--toolPendingBg);
+  border: 1px solid var(--borderMuted);
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.thinking {
+  border-left: 2px solid var(--thinkingLow);
+  padding-left: 10px;
+  color: var(--thinkingText);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.editor {
+  border-top: 1px solid var(--thinkingOff); 
+  padding: 10px;
+  color: var(--text);
+  /* Simulate the thinking border changing */
+  border-color: var(--thinkingMinimal); 
+}

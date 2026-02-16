@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Theme Preview</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #1e1e1e; color: #fff; }
+        .preview-pane { flex: 1; padding: 20px; overflow-y: auto; background-color: #000; display: flex; justify-content: center; align-items: center; }
+        .editor-pane { width: 300px; background-color: #252526; border-left: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; }
+        .editor-header { padding: 10px; background-color: #333; font-weight: bold; border-bottom: 1px solid #111; }
+        .editor-content { flex: 1; overflow-y: auto; padding: 10px; }
+        .variable-row { margin-bottom: 15px; }
+        .variable-label { display: block; font-size: 12px; margin-bottom: 5px; color: #ccc; font-family: monospace; }
+        .variable-input-group { display: flex; gap: 5px; }
+        input[type="color"] { width: 30px; height: 30px; border: none; padding: 0; background: none; cursor: pointer; }
+        input[type="text"] { flex: 1; background-color: #3c3c3c; border: 1px solid #333; color: #fff; padding: 5px; font-family: monospace; }
+        .pi-interface { border: 1px solid var(--border); width: 100%; max-width: 800px; }
+        /* Existing preview styles embedded here for context */
+        .header { border-bottom: 1px solid var(--borderMuted); padding: 10px; color: var(--accent); font-weight: bold; }
+        .messages { padding: 20px; }
+        .msg-user { background-color: var(--userMessageBg); padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--border); }
+        .msg-assistant { padding: 10px; margin-bottom: 10px; }
+        .tool-block { background-color: var(--toolPendingBg); border: 1px solid var(--borderMuted); padding: 10px; margin: 10px 0; }
+        .thinking { border-left: 2px solid var(--thinkingLow); padding-left: 10px; color: var(--thinkingText); font-style: italic; margin-bottom: 10px; }
+        .editor { border-top: 1px solid var(--thinkingOff); padding: 10px; color: var(--text); border-color: var(--thinkingMinimal); }
+    </style>
+</head>
+<body>
+
+    <div class="preview-pane">
+        <div class="pi-interface">
+            <div class="header">
+                π pi-coding-agent v0.5.0
+            </div>
+
+            <div class="messages">
+                <!-- User Message -->
+                <div class="msg-user">
+                    Can you help me style this interface?
+                </div>
+
+                <!-- Thinking Block -->
+                <div class="thinking">
+                    Thinking Process...<br>
+                    Analyzing SCSS variables...
+                </div>
+
+                <!-- Assistant/Tool -->
+                <div class="msg-assistant">
+                    Certainly. I'll check the current directory.
+
+                    <div class="tool-block">
+                        <span style="color: var(--toolTitle)">bash</span> 
+                        <span style="color: var(--muted)">ls -la</span>
+                        <br>
+                        <span style="color: var(--toolOutput)">theme.scss<br>build.js</span>
+                    </div>
+
+                    Here is some markdown:
+                    <br><br>
+                    <span style="color: var(--mdHeading)"># Theme Update</span>
+                    <br>
+                    Using <span style="color: var(--mdCode)">SCSS</span> allows for:
+                    <ul>
+                        <li style="color: var(--mdListBullet)">Variables</li>
+                        <li style="color: var(--mdListBullet)">Mixins</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="editor">
+                > User input goes here... <span style="background: var(--accent); color: #000"> </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="editor-pane">
+        <div class="editor-header">
+            Theme Variables
+            <button id="compile-btn" style="float: right; cursor: pointer; background: #00aaff; border: none; color: white; padding: 2px 8px; border-radius: 3px;">Compile</button>
+        </div>
+        <div class="editor-content" id="variable-editor">
+            <!-- Variables injected here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch variables and populate editor
+        async function loadVariables() {
+            try {
+                const res = await fetch('/api/variables');
+                const variables = await res.json();
+                const container = document.getElementById('variable-editor');
+                container.innerHTML = '';
+
+                for (const [key, value] of Object.entries(variables)) {
+                    const row = document.createElement('div');
+                    row.className = 'variable-row';
+                    
+                    const label = document.createElement('label');
+                    label.className = 'variable-label';
+                    label.textContent = '$' + key;
+                    
+                    const group = document.createElement('div');
+                    group.className = 'variable-input-group';
+
+                    const textInput = document.createElement('input');
+                    textInput.type = 'text';
+                    textInput.value = value;
+                    textInput.dataset.key = key;
+
+                    // Color picker (only if value looks like a color)
+                    if (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl')) {
+                        const colorInput = document.createElement('input');
+                        colorInput.type = 'color';
+                        // Simple hex conversion for picker (picker needs #RRGGBB)
+                        // If it's a complex SCSS function, picker might default to black, which is fine
+                        if (value.startsWith('#') && value.length === 7) {
+                            colorInput.value = value;
+                        }
+                        colorInput.addEventListener('input', (e) => {
+                            textInput.value = e.target.value;
+                            updateVariable(key, e.target.value);
+                        });
+                        group.appendChild(colorInput);
+                    }
+
+                    textInput.addEventListener('change', (e) => {
+                        updateVariable(key, e.target.value);
+                    });
+
+                    group.appendChild(textInput);
+                    row.appendChild(label);
+                    row.appendChild(group);
+                    container.appendChild(row);
+                }
+            } catch (err) {
+                console.error('Failed to load variables', err);
+            }
+        }
+
+        // Send update to server
+        async function updateVariable(key, value) {
+            try {
+                await fetch('/api/variables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [key]: value })
+                });
+                // Reload CSS to see changes
+                // The chokidar watcher on server will recompile CSS
+                // We just need to refresh the link tag
+                setTimeout(refreshCss, 500); 
+            } catch (err) {
+                console.error('Failed to update variable', err);
+            }
+        }
+
+        function refreshCss() {
+            const link = document.querySelector('link[rel="stylesheet"]');
+            link.href = link.href.split('?')[0] + '?t=' + new Date().getTime();
+        }
+
+        // Poll for CSS changes (since we removed the meta refresh)
+        setInterval(refreshCss, 2000);
+
+        loadVariables();
+
+        document.getElementById('compile-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('compile-btn');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            try {
+                await fetch('/api/compile', { method: 'POST' });
+                refreshCss();
+            } catch (err) {
+                console.error('Failed to compile', err);
+            } finally {
+                btn.textContent = originalText;
+            }
+        });
+    </script>
+
+</body>
+</html>

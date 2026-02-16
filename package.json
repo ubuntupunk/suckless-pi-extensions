@@ -49,32 +49,32 @@
     ]
   },
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*",
-    "@mariozechner/pi-ai": "*",
-    "@aliou/sh": "^0.1.0",
+    "@aliou/pi-agent-kit": "*",
+    "@aliou/pi-linkup": "^0.7.1",
     "@aliou/pi-utils-settings": "*",
     "@aliou/pi-utils-ui": "*",
-    "@aliou/pi-agent-kit": "*",
-    "@sinclair/typebox": "^0.34.41",
     "@aliou/sesame": "^0.4.0",
-    "better-sqlite3": "^12.6.2",
-    "yaml": "^2.8.2",
-    "@aliou/pi-linkup": "^0.7.1",
+    "@aliou/sh": "^0.1.0",
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-tui": "*",
     "@mozilla/readability": "^0.5.0",
+    "@sinclair/typebox": "^0.34.41",
+    "better-sqlite3": "^12.6.2",
     "jsdom": "^26.0.0",
     "turndown": "^7.2.0",
-    "turndown-plugin-gfm": "^1.0.2"
+    "turndown-plugin-gfm": "^1.0.2",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.20.5",
-    "typescript": "^5.7.0",
     "@types/jsdom": "^21.1.7",
+    "@types/mozilla-readability": "^0.2.1",
+    "@types/node": "^22.0.0",
     "@types/turndown": "^5.0.5",
-    "@types/mozilla-readability": "^0.2.1"
+    "tsx": "^4.20.5",
+    "typescript": "^5.7.0"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

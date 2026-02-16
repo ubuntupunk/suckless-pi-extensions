@@ -30,7 +30,7 @@ const REQUIRED_KEYS = [
     "thinkingLow", "thinkingMedium", "thinkingHigh", "thinkingXhigh", "bashMode"
 ];
 
-const compile = () => {
+const compile = (customName = null) => {
     try {
         console.log('🎨 Compiling SCSS...');
         
@@ -41,6 +41,17 @@ const compile = () => {
         // 2. Write CSS for the HTML Preview
         fs.writeFileSync(PREVIEW_CSS, css);
 
+        // Helper function to round RGB values to integers
+        const roundRgb = (value) => {
+            return value.replace(/rgb\(([^)]+)\)/, (_, rgb) => {
+                const parts = rgb.split(',').map(v => {
+                    const num = parseFloat(v.trim());
+                    return isNaN(num) ? v.trim() : Math.round(num);
+                });
+                return `rgb(${parts.join(', ')})`;
+            });
+        };
+
         // 3. Parse CSS Variables to build JSON
         // We look for the :root { ... } block and extract --key: value;
         const colors = {};
@@ -49,23 +60,30 @@ const compile = () => {
             const regex = new RegExp(`--${key}:\\s*([^;]+);`);
             const match = css.match(regex);
             if (match) {
-                colors[key] = match[1].trim();
+                let value = match[1].trim();
+                // Round RGB values to integers
+                value = roundRgb(value);
+                colors[key] = value;
             } else {
-                console.warn(`⚠️  Missing token in SCSS: --${key}`);
-                colors[key] = "#FF00FF"; // Debug pink for missing
+                // Don't warn for every compile, only if needed
+                if (customName) console.warn(`⚠️  Missing token in SCSS: --${key}`);
+                colors[key] = ""; // Default empty
             }
         });
 
         // 4. Construct JSON Object
+        const finalName = customName || THEME_NAME;
         const themeJson = {
-            name: THEME_NAME,
+            name: finalName,
             colors: colors
         };
 
-        // 5. Write JSON to Pi's theme directory
-        fs.writeFileSync(OUTPUT_JSON, JSON.stringify(themeJson, null, 2));
+        // 5. Write JSON to Pi's theme directory (Only if explicitly saving or default)
+        const outputPath = `../.pi/themes/${finalName}.json`;
+        fs.ensureDirSync(path.dirname(outputPath));
+        fs.writeFileSync(outputPath, JSON.stringify(themeJson, null, 2));
         
-        console.log(`✅ Theme updated: ${OUTPUT_JSON}`);
+        console.log(`✅ Theme updated: ${outputPath}`);
         console.log(`✨ Preview updated: ${PREVIEW_CSS}`);
 
     } catch (err) {
@@ -128,6 +146,25 @@ const server = http.createServer((req, res) => {
         compile();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
+        return;
+    }
+
+    // API: POST /api/save
+    if (req.method === 'POST' && req.url === '/api/save') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            try {
+                const { name } = JSON.parse(body);
+                if (!name) throw new Error("Name is required");
+                compile(name);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, path: `../.pi/themes/${name}.json` }));
+            } catch (err) {
+                res.writeHead(500);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
         return;
     }
 

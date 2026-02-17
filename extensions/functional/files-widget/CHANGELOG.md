@@ -2,6 +2,25 @@
 
 All notable changes to this extension will be documented in this file.
 
+## [0.1.15] - 2026-02-17
+
+### Fixed
+- Fix UI freeze when opening large files by adding file size checks (warns >2.5MB, blocks >5MB)
+- Fix empty directory listing in non-git repositories by adding `scanDirectory()` fallback
+- Fix selected item visibility - now uses `▌` prefix + bold instead of background color
+- Fix crash on render errors with error boundaries in viewer and browser
+
+### Added
+- Add `h`/`l` (or arrow left/right) navigation for collapsing/expanding directories
+- Add git status indicators inline: `M` (modified), `A` (added), `D` (deleted), `?` (untracked)
+- Add agent-modified indicator `*` for files changed by the agent
+- Add loading state display to prevent duplicate load attempts
+
+### Changed
+- Improve error handling in `handleInput()` to silently catch and log errors
+- Update help text to show all navigation keys: `j/k: nav  h/l: collapse/expand  Enter: open  q: close`
+- Expand ignored directories: `__pycache__`, `.venv`, `venv`
+
 ## [0.1.14] - 2026-02-03
 
 ### Added

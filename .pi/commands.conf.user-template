@@ -1,0 +1,35 @@
+# Suckless Pi - User Commands Configuration
+# Location: ~/.pi/commands.conf
+# 
+# Personal command aliases and organization.
+# These override project defaults from repo/.pi/commands.conf
+
+# ============================================================================
+# PERSONAL ALIASES
+# ============================================================================
+# Quick shortcuts for frequently used commands
+
+# Search
+alias ws /brave-search
+alias gs /google-search
+
+# Files
+alias fb /browse
+alias ls /files
+
+# Review
+alias rw /review
+alias diff /review
+
+# ============================================================================
+# PERSONAL GROUPS (for /help organization)
+# ============================================================================
+group search /brave-search /google-search
+group files /browse /files /readfiles
+group review /review /diff
+
+# ============================================================================
+# HIDE COMMANDS (remove from help listing)
+# ============================================================================
+# hide /debug-command
+# hide /internal-tool

@@ -1,5 +1,9 @@
 node_modules/
 .pi/
+!.pi/extensions.conf
+!.pi/commands.conf
+!.pi/commands.conf.user-template
+!.pi/themes/
 dist/
 build/
 *.log

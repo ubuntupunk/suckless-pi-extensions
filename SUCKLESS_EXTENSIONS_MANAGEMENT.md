@@ -1,6 +1,32 @@
 # Suckless Extensions Management
 
 > Philosophy: **Configuration over convention. Simplicity over elegance.**
+>
+> **Hybrid Approach:** Project defaults in repo `.pi/`, user overrides in `~/.pi/`
+
+---
+
+## Quick Start
+
+### For Users: Personal Aliases
+
+Create `~/.pi/commands.conf`:
+
+```bash
+mkdir -p ~/.pi
+cat > ~/.pi/commands.conf << 'EOF'
+# My personal shortcuts
+alias ws /brave-search
+alias fb /browse
+alias rw /review
+EOF
+```
+
+### For Teams: Project Defaults
+
+Edit `.pi/extensions.conf` in your repo to set team defaults.
+
+---
 
 ## Problem Statement
 
@@ -21,18 +47,32 @@ Follow Unix tradition: **package.json defines what's installed, `.conf` files de
 ## Architecture
 
 ```
+~/.pi/
+├── extensions.conf          # User overrides (gitignored)
+└── commands.conf            # Personal aliases (gitignored)
+
 suckless-pi-extensions/
 ├── .pi/
-│   ├── extensions.conf      # Enable/disable extensions
-│   ├── commands.conf        # Aliases, groups, hide
-│   └── agent/
-│       └── settings.json    # Pi's settings (auto-generated)
+│   ├── extensions.conf      # Project defaults (versioned)
+│   ├── commands.conf        # Project aliases (versioned)
+│   └── commands.conf.user-template  # Template for users
 ├── packages/
 │   └── manager/             # Extension loader (~350 LOC)
 │       ├── index.ts         # Main entry
 │       ├── conf-parser.ts   # Parse .conf files
 │       └── alias-api.ts     # Wrap ExtensionAPI for aliases
 └── extensions/              # Your extensions
+```
+
+### Load Order
+
+1. **Project defaults** from `repo/.pi/`
+2. **User overrides** from `~/.pi/`
+3. **Merge:** User config takes precedence
+
+```
+User alias "ws" → Project alias "fb" → Original "/brave-search"
+User disable → Project enable → Extension DISABLED
 ```
 
 ---
@@ -42,6 +82,8 @@ suckless-pi-extensions/
 ### `extensions.conf`
 
 Enable or disable extensions without editing `package.json`.
+
+**Location:** `.pi/extensions.conf` (project) or `~/.pi/extensions.conf` (user)
 
 ```ini
 # Format: [enable|disable] <path>
@@ -69,6 +111,8 @@ disable extensions/utility/introspection/index.ts
 ### `commands.conf`
 
 Organize and alias commands.
+
+**Location:** `.pi/commands.conf` (project) or `~/.pi/commands.conf` (user)
 
 ```ini
 # Format:
@@ -211,46 +255,36 @@ function renderHelp(config: CommandConfig): string {
 
 ## Migration Path
 
-### Step 1: Create Config Files
+### Step 1: Create Project Config Files
 
 ```bash
 cd suckless-pi-extensions
 
-# Create extensions.conf from current package.json
-cat > .pi/extensions.conf << 'EOF'
-# Auto-generated from package.json
-# All extensions currently enabled
-EOF
-
-grep -o '"extensions/[^"]*"' package.json | \
-  sed 's/"\(.*\)"/enable \1/' >> .pi/extensions.conf
-
-# Create commands.conf with defaults
-cat > .pi/commands.conf << 'EOF'
-# Command aliases, groups, and visibility
-# See SUCKLESS_EXTENSIONS_MANAGEMENT.md for format
-
-# Example aliases:
-# alias ws /brave-search
-# alias fb /browse
-
-# Example groups:
-# group search /brave-search
-# group files /browse /files
-
-# Example hide:
-# hide /debug-command
-EOF
+# Already done! Files created in .pi/
+# .pi/extensions.conf - project defaults
+# .pi/commands.conf - project aliases
+# .pi/commands.conf.user-template - template for users
 ```
 
-### Step 2: Implement Manager
+### Step 2: Create User Config (Optional)
+
+```bash
+# Copy template to home directory
+mkdir -p ~/.pi
+cp .pi/commands.conf.user-template ~/.pi/commands.conf
+
+# Edit with your personal shortcuts
+nano ~/.pi/commands.conf
+```
+
+### Step 3: Implement Manager
 
 ```bash
 mkdir -p packages/manager
 # Create: index.ts, conf-parser.ts, alias-api.ts
 ```
 
-### Step 3: Update package.json
+### Step 4: Update package.json
 
 ```json
 {
@@ -258,13 +292,13 @@ mkdir -p packages/manager
     "extensions": [
       "packages/manager/index.ts",  // Load first
       "extensions/suckless/status-bar.ts",
-      // ... rest become inert
+      // ... rest become inert (manager loads them)
     ]
   }
 }
 ```
 
-### Step 4: Deprecate Direct Loading
+### Step 5: Deprecate Direct Loading
 
 Extensions loaded via manager check config. Direct loads warned:
 
@@ -279,29 +313,31 @@ Extensions loaded via manager check config. Direct loads warned:
 ### Disable Extension Temporarily
 
 ```bash
-# Disable brave-search
-echo "disable extensions/utility/brave-search/index.ts" >> .pi/extensions.conf
+# User override (takes precedence over project defaults)
+echo "disable extensions/utility/brave-search/index.ts" >> ~/.pi/extensions.conf
 
 # Re-enable
-sed -i '/^disable.*brave-search/d' .pi/extensions.conf
-echo "enable extensions/utility/brave-search/index.ts" >> .pi/extensions.conf
+sed -i '/^disable.*brave-search/d' ~/.pi/extensions.conf
+echo "enable extensions/utility/brave-search/index.ts" >> ~/.pi/extensions.conf
 ```
 
 ### Add Personal Alias
 
 ```bash
-echo "alias ws /brave-search" >> .pi/commands.conf
+# User config
+echo "alias ws /brave-search" >> ~/.pi/commands.conf
 ```
 
 ### View Active Extensions
 
 ```bash
+# See project defaults
 grep "^enable" .pi/extensions.conf | wc -l
-# 18
+# 20
 
-grep "^disable" .pi/extensions.conf
+# See user overrides
+grep "^disable" ~/.pi/extensions.conf
 # disable extensions/functional/ralph-loop.ts
-# disable extensions/functional/test-ext/index.ts
 ```
 
 ### Quick Status
@@ -309,6 +345,15 @@ grep "^disable" .pi/extensions.conf
 ```bash
 # One-liner to see enabled extensions
 grep "^enable" .pi/extensions.conf | cut -d' ' -f2 | xargs -I{} basename -a {}
+```
+
+### Setup User Config
+
+```bash
+# First time setup
+mkdir -p ~/.pi
+cp .pi/commands.conf.user-template ~/.pi/commands.conf
+nano ~/.pi/commands.conf  # Edit with your shortcuts
 ```
 
 ---
@@ -372,11 +417,16 @@ grep "^enable" .pi/extensions.conf | cut -d' ' -f2 | xargs -I{} basename -a {}
 
 ### 2026-02-17
 - [x] Document architecture in SUCKLESS_EXTENSIONS_MANAGEMENT.md
-- [ ] Implement conf-parser.ts
-- [ ] Implement manager/index.ts
-- [ ] Implement alias-api.ts
-- [ ] Generate initial .conf files
+- [x] Implement conf-parser.ts (hybrid loading)
+- [x] Implement manager/index.ts
+- [x] Implement alias-api.ts
+- [x] Create .pi/extensions.conf (project defaults)
+- [x] Create .pi/commands.conf (project aliases)
+- [x] Create .pi/commands.conf.user-template
+- [ ] Update package.json to use manager
 - [ ] Test with existing extensions
+- [ ] Create /extensions-status command
+- [ ] Update README.md
 
 ---
 

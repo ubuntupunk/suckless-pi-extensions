@@ -1,4 +1,5 @@
 node_modules/
+suckless-pi/
 .pi/
 !.pi/extensions.conf
 !.pi/commands.conf

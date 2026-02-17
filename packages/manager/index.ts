@@ -126,6 +126,9 @@ export async function loadExtensions(
   const projectRoot = rootDir || getProjectRoot();
 
   console.log("[manager] Initializing extension manager...");
+  console.log(`[manager] Project root: ${projectRoot}`);
+  console.log(`[manager] __dirname: ${__dirname}`);
+  console.log(`[manager] import.meta.dirname: ${import.meta.dirname}`);
 
   // Load configuration
   const config = loadManagerConfig(projectRoot);
@@ -144,8 +147,14 @@ export async function loadExtensions(
   // Discover extensions from filesystem (suckless: convention over config)
   const extensions = discoverExtensions(projectRoot);
 
+  console.log(`[manager] Discovery returned: ${extensions.length} extensions`);
+  console.log(`[manager] Extensions list: ${JSON.stringify(extensions)}`);
+
   if (extensions.length === 0) {
     console.warn("[manager] No extensions found in extensions/ directory");
+    const extDir = join(projectRoot, "extensions");
+    console.warn(`[manager] Checked: ${extDir}`);
+    console.warn(`[manager] Exists: ${existsSync(extDir)}`);
     return;
   }
 

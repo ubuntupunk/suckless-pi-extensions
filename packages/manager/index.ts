@@ -38,8 +38,14 @@ function getProjectRoot(): string {
 }
 
 /**
- * Recursively discover all .ts/.js files in extensions/
+ * Recursively discover extension entry points
  * Suckless approach: convention over configuration
+ *
+ * Rules:
+ * - Load index.ts files in extension directories
+ * - Load standalone .ts files (single-file extensions)
+ * - Skip nested directories (internal modules)
+ * - Skip files starting with _
  */
 function discoverExtensions(rootDir: string, dir?: string, results: string[] = []): string[] {
   const targetDir = dir || join(rootDir, "extensions");
@@ -54,19 +60,24 @@ function discoverExtensions(rootDir: string, dir?: string, results: string[] = [
     const fullPath = join(targetDir, entry.name);
     const relPath = relative(rootDir, fullPath);
 
-    // Skip hidden files, test files, and non-extension files
+    // Skip hidden files/dirs
     if (entry.name.startsWith('.')) continue;
-    if (entry.name.includes('.test.') || entry.name.includes('.spec.')) continue;
 
     if (entry.isDirectory()) {
-      // Recurse into subdirectory
-      discoverExtensions(rootDir, fullPath, results);
-    } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.js'))) {
-      // Skip index files at root level of directories (we want entry points)
-      if (entry.name === 'index.ts' || entry.name === 'index.js') {
-        results.push(relPath);
-      } else if (!entry.name.startsWith('_')) {
-        // Non-index files are also valid entry points
+      // Look inside extension directories for index.ts
+      const indexFile = join(fullPath, 'index.ts');
+      if (existsSync(indexFile)) {
+        results.push(relPath + '/index.ts');
+      } else {
+        // Check for single .ts file matching directory name
+        const singleFile = fullPath + '.ts';
+        if (existsSync(singleFile)) {
+          results.push(relPath + '.ts');
+        }
+      }
+    } else if (entry.isFile() && entry.name.endsWith('.ts')) {
+      // Single-file extensions at root (e.g., memory-mode.ts, ralph-loop.ts)
+      if (!entry.name.startsWith('_')) {
         results.push(relPath);
       }
     }

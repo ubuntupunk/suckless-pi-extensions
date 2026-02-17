@@ -50,11 +50,15 @@ function getProjectRoot(): string {
 function discoverExtensions(rootDir: string, dir?: string, results: string[] = []): string[] {
   const targetDir = dir || join(rootDir, "extensions");
 
+  console.log(`[manager] Scanning: ${targetDir}`);
+
   if (!existsSync(targetDir)) {
+    console.warn(`[manager] Directory not found: ${targetDir}`);
     return results;
   }
 
   const entries = readdirSync(targetDir, { withFileTypes: true });
+  console.log(`[manager] Found ${entries.length} entries in ${targetDir}`);
 
   for (const entry of entries) {
     const fullPath = join(targetDir, entry.name);
@@ -67,17 +71,20 @@ function discoverExtensions(rootDir: string, dir?: string, results: string[] = [
       // Look inside extension directories for index.ts
       const indexFile = join(fullPath, 'index.ts');
       if (existsSync(indexFile)) {
+        console.log(`[manager] Found extension: ${relPath}/index.ts`);
         results.push(relPath + '/index.ts');
       } else {
         // Check for single .ts file matching directory name
         const singleFile = fullPath + '.ts';
         if (existsSync(singleFile)) {
+          console.log(`[manager] Found single-file extension: ${relPath}.ts`);
           results.push(relPath + '.ts');
         }
       }
     } else if (entry.isFile() && entry.name.endsWith('.ts')) {
       // Single-file extensions at root (e.g., memory-mode.ts, ralph-loop.ts)
       if (!entry.name.startsWith('_')) {
+        console.log(`[manager] Found root extension: ${relPath}`);
         results.push(relPath);
       }
     }

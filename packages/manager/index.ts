@@ -104,7 +104,9 @@ async function loadExtension(
 ): Promise<void> {
   try {
     // Resolve path relative to project root
-    const resolvedPath = join(projectRoot, extPath);
+    // extPath is like "functional/files-widget/index.ts"
+    // Need to join with "extensions/" subdirectory
+    const resolvedPath = join(projectRoot, "extensions", extPath);
     const module = await import(resolvedPath);
     if (module.default && typeof module.default === "function") {
       await module.default(api);

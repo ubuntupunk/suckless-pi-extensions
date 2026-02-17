@@ -6,6 +6,9 @@ import type {
   ExtensionAPI,
   CommandDefinition,
   ExtensionContext,
+  ToolDefinition,
+  MessageRenderer,
+  TSchema,
 } from "@mariozechner/pi-coding-agent";
 
 export class AliasAPI implements ExtensionAPI {
@@ -36,18 +39,26 @@ export class AliasAPI implements ExtensionAPI {
     const normalizedName = name.startsWith("/") ? name : `/${name}`;
     for (const [alias, target] of this.aliases.entries()) {
       const normalizedTarget = target.startsWith("/") ? target : `/${target}`;
-      
+
       if (normalizedTarget === normalizedName) {
         const aliasName = alias.startsWith("/") ? alias : `/${alias}`;
         const aliasDef: CommandDefinition = {
           ...definition,
           description: `${definition.description} (alias: ${name})`,
         };
-        
+
         this.original.registerCommand(aliasName, aliasDef);
         this.registeredCommands.set(aliasName, aliasDef);
       }
     }
+  }
+
+  registerTool<TParams extends TSchema = TSchema, TDetails = unknown>(tool: ToolDefinition<TParams, TDetails>): void {
+    this.original.registerTool(tool);
+  }
+
+  registerMessageRenderer<T = unknown>(customType: string, renderer: MessageRenderer<T>): void {
+    this.original.registerMessageRenderer(customType, renderer);
   }
 
   on(event: string, handler: (...args: any[]) => void): void {
@@ -76,8 +87,44 @@ export class AliasAPI implements ExtensionAPI {
     this.original.sendUserMessage(content, options);
   }
 
+  sendMessage<T = unknown>(
+    message: Pick<any, "customType" | "content" | "display" | "details">,
+    options?: { triggerTurn?: boolean; deliverAs?: "steer" | "followUp" | "nextTurn" }
+  ): void {
+    this.original.sendMessage(message, options);
+  }
+
+  appendEntry<T = unknown>(customType: string, data?: T): void {
+    this.original.appendEntry(customType, data);
+  }
+
   getExtensionContext(): ExtensionContext {
     return this.original.getExtensionContext();
+  }
+
+  getFlag(name: string): boolean | string | undefined {
+    return this.original.getFlag(name);
+  }
+
+  registerFlag(
+    name: string,
+    options: {
+      description?: string;
+      type: "boolean" | "string";
+      default?: boolean | string;
+    }
+  ): void {
+    this.original.registerFlag(name, options);
+  }
+
+  registerShortcut(
+    shortcut: any,
+    options: {
+      description?: string;
+      handler: (ctx: ExtensionContext) => Promise<void> | void;
+    }
+  ): void {
+    this.original.registerShortcut(shortcut, options);
   }
 
   /**
@@ -101,6 +148,63 @@ export class AliasAPI implements ExtensionAPI {
   isAlias(name: string): boolean {
     const normalized = name.startsWith("/") ? name : `/${name}`;
     return this.aliases.has(normalized);
+  }
+
+  // Additional ExtensionAPI methods - pass through to original
+  getActiveTools(): string[] {
+    return this.original.getActiveTools();
+  }
+
+  getAllTools(): any[] {
+    return this.original.getAllTools();
+  }
+
+  setActiveTools(toolNames: string[]): void {
+    this.original.setActiveTools(toolNames);
+  }
+
+  getCommands(): any[] {
+    return this.original.getCommands();
+  }
+
+  setModel(model: any): Promise<boolean> {
+    return this.original.setModel(model);
+  }
+
+  getThinkingLevel(): any {
+    return this.original.getThinkingLevel();
+  }
+
+  setThinkingLevel(level: any): void {
+    this.original.setThinkingLevel(level);
+  }
+
+  setSessionName(name: string): void {
+    this.original.setSessionName(name);
+  }
+
+  getSessionName(): string | undefined {
+    return this.original.getSessionName();
+  }
+
+  setLabel(entryId: string, label: string | undefined): void {
+    this.original.setLabel(entryId, label);
+  }
+
+  exec(command: string, args: string[], options?: any): Promise<any> {
+    return this.original.exec(command, args, options);
+  }
+
+  getFlag(name: string): boolean | string | undefined {
+    return this.original.getFlag(name);
+  }
+
+  registerProvider(name: string, config: any): void {
+    this.original.registerProvider(name, config);
+  }
+
+  get events(): any {
+    return this.original.events;
   }
 }
 

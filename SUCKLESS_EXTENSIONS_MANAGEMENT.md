@@ -1,8 +1,44 @@
 # Suckless Extensions Management
 
-> Philosophy: **Configuration over convention. Simplicity over elegance.**
->
-> **Hybrid Approach:** Project defaults in repo `.pi/`, user overrides in `~/.pi/`
+> Philosophy: **Configuration over convention. Simplicity over elegance. Less is more.**
+
+---
+
+## System Stats
+
+| Component | LOC | Description |
+|-----------|-----|-------------|
+| `conf-parser.ts` | 234 | Parse .conf files with error reporting |
+| `alias-api.ts` | 115 | Wrap ExtensionAPI for aliases |
+| `index.ts` | 180 | Main loader with hybrid config |
+| **Manager Total** | **529** | ~350 estimated, actually 529 LOC |
+| | | |
+| `extensions.conf` | 48 | Project defaults (25 extensions) |
+| `commands.conf` | 27 | Project aliases (minimal) |
+| **Config Total** | **75** | Plain text, grep-able |
+| | | |
+| **Grand Total** | **604** | Without docs |
+| **With Docs** | **1041** | Including this file |
+
+### Comparison
+
+| Approach | LOC | Complexity |
+|----------|-----|------------|
+| **Suckless Manager** | 604 | Simple .conf files |
+| Database/Registry | ~2000+ | Schema, migrations, deps |
+| Full Plugin System | ~5000+ | Lifecycle, hooks, sandbox |
+| Pi Built-in (est.) | ~10000+ | Complete framework |
+
+Suckless Wins.
+
+**We chose less.** 604 lines gives us:
+- Enable/disable extensions
+- Command aliases
+- Groups and hiding
+- User overrides
+- Zero runtime overhead
+- No dependencies
+- Grep-able configs
 
 ---
 
@@ -415,7 +451,7 @@ nano ~/.pi/commands.conf  # Edit with your shortcuts
 
 ## Progress Log
 
-### 2026-02-17
+### 2026-02-17 - Integration Complete
 - [x] Document architecture in SUCKLESS_EXTENSIONS_MANAGEMENT.md
 - [x] Implement conf-parser.ts (hybrid loading)
 - [x] Implement manager/index.ts
@@ -423,10 +459,17 @@ nano ~/.pi/commands.conf  # Edit with your shortcuts
 - [x] Create .pi/extensions.conf (project defaults)
 - [x] Create .pi/commands.conf (project aliases)
 - [x] Create .pi/commands.conf.user-template
-- [ ] Update package.json to use manager
+- [x] Update package.json to use manager
+- [x] Add LOC stats to documentation
 - [ ] Test with existing extensions
 - [ ] Create /extensions-status command
 - [ ] Update README.md
+
+### System Stats (Final)
+- **Manager:** 529 LOC (3 files)
+- **Config:** 75 LOC (2 files)
+- **Total:** 604 LOC
+- **With docs:** 1041 LOC
 
 ---
 

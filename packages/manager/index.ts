@@ -1,11 +1,15 @@
 /**
  * Extension Manager
- * 
+ *
  * Loads and manages extensions based on .conf configuration files.
- * 
+ *
  * Usage:
+ *   // In package.json pi.extensions:
+ *   "packages/manager/index.ts"  // Load first - handles the rest
+ *
+ *   // Or programmatically:
  *   import { loadExtensions } from "./packages/manager";
- *   loadExtensions(pi);
+ *   await loadExtensions(pi);
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -20,16 +24,32 @@ import {
 import { createAliasAPI } from "./alias-api";
 
 /**
+ * Get the directory containing this manager module
+ */
+function getManagerDir(): string {
+  return dirname(import.meta.dirname || __dirname);
+}
+
+/**
+ * Get the project root (parent of packages/)
+ */
+function getProjectRoot(): string {
+  const managerDir = getManagerDir();
+  // Go up from packages/manager to project root
+  return join(managerDir, "..");
+}
+
+/**
  * Load package.json to get extension list
  */
 function loadPackageExtensions(rootDir: string): string[] {
   const pkgPath = join(rootDir, "package.json");
-  
+
   if (!existsSync(pkgPath)) {
     console.error("[manager] package.json not found");
     return [];
   }
-  
+
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
     return pkg.pi?.extensions || [];
@@ -64,13 +84,15 @@ async function loadExtension(
  */
 export async function loadExtensions(
   pi: ExtensionAPI,
-  rootDir: string = process.cwd()
+  rootDir?: string
 ): Promise<void> {
+  const projectRoot = rootDir || getProjectRoot();
+
   console.log("[manager] Initializing extension manager...");
-  
+
   // Load configuration
-  const config = loadManagerConfig(rootDir);
-  
+  const config = loadManagerConfig(projectRoot);
+
   // Log configuration summary
   console.log(
     `[manager] Extensions: ${config.extensions.enabled.size} enabled, ${config.extensions.disabled.size} disabled`
@@ -78,31 +100,38 @@ export async function loadExtensions(
   console.log(
     `[manager] Commands: ${config.commands.aliases.size} aliases, ${config.commands.groups.size} groups, ${config.commands.hidden.size} hidden`
   );
-  
+
   // Create wrapped API with alias support
   const api = createAliasAPI(pi, config.commands.aliases);
-  
+
   // Get extension list from package.json
-  const extensions = loadPackageExtensions(rootDir);
-  
+  const extensions = loadPackageExtensions(projectRoot);
+
   if (extensions.length === 0) {
     console.warn("[manager] No extensions found in package.json");
     return;
   }
-  
-  // Filter and load extensions
-  const enabledExtensions = extensions.filter((ext) =>
-    shouldLoadExtension(ext, config.extensions)
-  );
-  
-  console.log(`[manager] Loading ${enabledExtensions.length}/${extensions.length} extensions`);
-  
+
+  // Filter and load extensions (skip manager itself)
+  const enabledExtensions = extensions
+    .filter(ext => !ext.includes("packages/manager"))
+    .filter((ext) => shouldLoadExtension(ext, config.extensions));
+
+  console.log(`[manager] Loading ${enabledExtensions.length}/${extensions.length - 1} extensions`);
+
   // Load extensions sequentially to avoid race conditions
   for (const ext of enabledExtensions) {
     await loadExtension(ext, api);
   }
-  
+
   console.log("[manager] Extension manager initialized");
+}
+
+/**
+ * Default export - Pi calls this when loading the extension
+ */
+export default async function(pi: ExtensionAPI): Promise<void> {
+  await loadExtensions(pi);
 }
 
 /**

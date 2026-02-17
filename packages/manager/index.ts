@@ -38,62 +38,59 @@ function getProjectRoot(): string {
 }
 
 /**
- * Recursively discover extension entry points
+ * Discover extension entry points using simple glob pattern
  * Suckless approach: convention over configuration
- *
- * Rules:
- * - Load index.ts files in extension directories
- * - Load standalone .ts files (single-file extensions)
- * - Skip nested directories (internal modules)
- * - Skip files starting with _
  */
-function discoverExtensions(rootDir: string, dir?: string, results: string[] = []): string[] {
-  const targetDir = dir || join(rootDir, "extensions");
+function discoverExtensions(rootDir: string): string[] {
+  const results: string[] = [];
+  const extDir = join(rootDir, "extensions");
 
-  console.log(`[manager] Scanning: ${targetDir}`);
+  console.log(`[manager] Scanning: ${extDir}`);
 
-  if (!existsSync(targetDir)) {
-    console.warn(`[manager] Directory not found: ${targetDir}`);
+  if (!existsSync(extDir)) {
+    console.warn(`[manager] Directory not found: ${extDir}`);
     return results;
   }
 
   try {
-    const entries = readdirSync(targetDir, { withFileTypes: true });
-    console.log(`[manager] Found ${entries.length} entries in ${targetDir}`);
+    // Read top-level directories (functional, suckless, utility)
+    const categories = readdirSync(extDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+      .map(d => d.name);
 
-    for (const entry of entries) {
-      const fullPath = join(targetDir, entry.name);
-      const relPath = relative(rootDir, fullPath);
+    console.log(`[manager] Categories: ${categories.join(', ')}`);
 
-      // Skip hidden files/dirs
-      if (entry.name.startsWith('.')) continue;
+    for (const cat of categories) {
+      const catDir = join(extDir, cat);
+      try {
+        const entries = readdirSync(catDir, { withFileTypes: true });
+        console.log(`[manager] ${cat}: ${entries.length} entries`);
 
-      if (entry.isDirectory()) {
-        // Look inside extension directories for index.ts
-        const indexFile = join(fullPath, 'index.ts');
-        if (existsSync(indexFile)) {
-          console.log(`[manager] Found extension: ${relPath}/index.ts`);
-          results.push(relPath + '/index.ts');
-        } else {
-          // Check for single .ts file matching directory name
-          const singleFile = fullPath + '.ts';
-          if (existsSync(singleFile)) {
-            console.log(`[manager] Found single-file extension: ${relPath}.ts`);
-            results.push(relPath + '.ts');
+        for (const entry of entries) {
+          if (entry.name.startsWith('.')) continue;
+
+          if (entry.isDirectory()) {
+            const indexPath = join(catDir, entry.name, 'index.ts');
+            if (existsSync(indexPath)) {
+              const relPath = join(cat, entry.name, 'index.ts');
+              console.log(`[manager] Found: ${relPath}`);
+              results.push(relPath);
+            }
+          } else if (entry.name.endsWith('.ts') && !entry.name.startsWith('_')) {
+            const relPath = join(cat, entry.name);
+            console.log(`[manager] Found: ${relPath}`);
+            results.push(relPath);
           }
         }
-      } else if (entry.isFile() && entry.name.endsWith('.ts')) {
-        // Single-file extensions at root (e.g., memory-mode.ts, ralph-loop.ts)
-        if (!entry.name.startsWith('_')) {
-          console.log(`[manager] Found root extension: ${relPath}`);
-          results.push(relPath);
-        }
+      } catch (err: any) {
+        console.error(`[manager] Error reading ${catDir}:`, err.message);
       }
     }
   } catch (err: any) {
-    console.error(`[manager] Error scanning ${targetDir}:`, err.message);
+    console.error(`[manager] Error reading ${extDir}:`, err.message);
   }
 
+  console.log(`[manager] Total discovered: ${results.length}`);
   return results.sort();
 }
 

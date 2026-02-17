@@ -57,37 +57,41 @@ function discoverExtensions(rootDir: string, dir?: string, results: string[] = [
     return results;
   }
 
-  const entries = readdirSync(targetDir, { withFileTypes: true });
-  console.log(`[manager] Found ${entries.length} entries in ${targetDir}`);
+  try {
+    const entries = readdirSync(targetDir, { withFileTypes: true });
+    console.log(`[manager] Found ${entries.length} entries in ${targetDir}`);
 
-  for (const entry of entries) {
-    const fullPath = join(targetDir, entry.name);
-    const relPath = relative(rootDir, fullPath);
+    for (const entry of entries) {
+      const fullPath = join(targetDir, entry.name);
+      const relPath = relative(rootDir, fullPath);
 
-    // Skip hidden files/dirs
-    if (entry.name.startsWith('.')) continue;
+      // Skip hidden files/dirs
+      if (entry.name.startsWith('.')) continue;
 
-    if (entry.isDirectory()) {
-      // Look inside extension directories for index.ts
-      const indexFile = join(fullPath, 'index.ts');
-      if (existsSync(indexFile)) {
-        console.log(`[manager] Found extension: ${relPath}/index.ts`);
-        results.push(relPath + '/index.ts');
-      } else {
-        // Check for single .ts file matching directory name
-        const singleFile = fullPath + '.ts';
-        if (existsSync(singleFile)) {
-          console.log(`[manager] Found single-file extension: ${relPath}.ts`);
-          results.push(relPath + '.ts');
+      if (entry.isDirectory()) {
+        // Look inside extension directories for index.ts
+        const indexFile = join(fullPath, 'index.ts');
+        if (existsSync(indexFile)) {
+          console.log(`[manager] Found extension: ${relPath}/index.ts`);
+          results.push(relPath + '/index.ts');
+        } else {
+          // Check for single .ts file matching directory name
+          const singleFile = fullPath + '.ts';
+          if (existsSync(singleFile)) {
+            console.log(`[manager] Found single-file extension: ${relPath}.ts`);
+            results.push(relPath + '.ts');
+          }
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.ts')) {
+        // Single-file extensions at root (e.g., memory-mode.ts, ralph-loop.ts)
+        if (!entry.name.startsWith('_')) {
+          console.log(`[manager] Found root extension: ${relPath}`);
+          results.push(relPath);
         }
       }
-    } else if (entry.isFile() && entry.name.endsWith('.ts')) {
-      // Single-file extensions at root (e.g., memory-mode.ts, ralph-loop.ts)
-      if (!entry.name.startsWith('_')) {
-        console.log(`[manager] Found root extension: ${relPath}`);
-        results.push(relPath);
-      }
     }
+  } catch (err: any) {
+    console.error(`[manager] Error scanning ${targetDir}:`, err.message);
   }
 
   return results.sort();

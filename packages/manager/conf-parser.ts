@@ -221,18 +221,23 @@ export function loadManagerConfig(rootDir: string = process.cwd()): ManagerConfi
  * Format:
  *   disable extensions/foo/bar.ts  # This extension won't load
  *   enable extensions/foo/bar.ts   # Override a project default disable
+ *
+ * Note: Paths are normalized - "extensions/" prefix is stripped for matching.
  */
 export function shouldLoadExtension(
   extPath: string,
   config: ExtensionConfig
 ): boolean {
-  // Explicitly disabled takes precedence
-  if (config.disabled.has(extPath)) {
+  // Normalize: strip "extensions/" prefix if present
+  const normalizedPath = extPath.replace(/^extensions\//, '');
+
+  // Check both normalized and original paths
+  if (config.disabled.has(extPath) || config.disabled.has(normalizedPath)) {
     return false;
   }
 
   // Explicitly enabled (overrides project defaults)
-  if (config.enabled.has(extPath)) {
+  if (config.enabled.has(extPath) || config.enabled.has(normalizedPath)) {
     return true;
   }
 

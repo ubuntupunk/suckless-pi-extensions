@@ -2,6 +2,18 @@
 
 [Read the Suckless Manifesto](SUCKLESS.md)
 
+## Branch Strategy
+
+This repository works in tandem with [suckless-pi](../suckless-pi/). Both follow the same branch structure:
+
+```
+main          → Tracks upstream (badlogic/pi-mono), no local commits
+suckless-main → Stable suckless branch with our extensions
+suckless-dev  → Active development branch (default)
+```
+
+See [suckless-pi/README.md](../suckless-pi/README.md) for detailed workflow.
+
 ## Sovereignty
 Sovereignty in our coding environment is the transition from being a consumer of bloated, opaque extensions to being the **architect of our own tools**. It means vendoring our dependencies, auditing every line of logic that steers our agent, and prioritizing "suckless" principles: simplicity, clarity, and frugality. By owning the code that runs our agent, we eliminate "instruction drift," "vulnerability injection," and "workflow rot." This repository is our single source of truth — a curated, local-first stack where every tool is included for a reason, and every reason is aligned with the craft of coding.
 

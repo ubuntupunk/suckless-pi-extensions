@@ -20,7 +20,6 @@ import {
   type ManagerConfig,
 } from "./conf-parser";
 import { createAliasAPI } from "./alias-api";
-import { createCompatibleAPI } from "./api-compat";
 
 /**
  * Get the directory containing this manager module
@@ -145,9 +144,8 @@ export async function loadExtensions(
     `[manager] Commands: ${config.commands.aliases.size} aliases, ${config.commands.groups.size} groups, ${config.commands.hidden.size} hidden`
   );
 
-  // Create wrapped API with alias support and compatibility layer
-  const aliasAPI = createAliasAPI(pi, config.commands.aliases);
-  const api = createCompatibleAPI(aliasAPI);
+  // Create wrapped API with alias support
+  const api = createAliasAPI(pi, config.commands.aliases);
 
   // Discover extensions from filesystem (suckless: convention over config)
   const extensions = discoverExtensions(projectRoot);

@@ -106,7 +106,10 @@ function getContextName(cwd: string): string {
 }
 
 function emitTitle(pi: ExtensionAPI, title: string) {
-  pi.events.emit(TERMINAL_TITLE_EVENT, { title });
+  // Use events.emit if available, otherwise just use appendEntry
+  if (pi.events && typeof pi.events.emit === "function") {
+    pi.events.emit(TERMINAL_TITLE_EVENT, { title });
+  }
   pi.appendEntry(TERMINAL_TITLE_ENTRY, { title });
 }
 

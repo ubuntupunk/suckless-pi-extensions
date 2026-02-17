@@ -49,7 +49,10 @@ export default function statusBarExtension(pi: ExtensionAPI) {
     ctx.ui.setWidget("suckless-status", (_tui: any, theme: any) => {
       const model = ctx.model?.id || "unknown";
       const provider = ctx.model?.provider || "unknown";
-      const thinking = pi.getThinkingLevel() || "off";
+      // Use getThinkingLevel if available, otherwise default to "off"
+      const thinking = typeof pi.getThinkingLevel === "function"
+        ? pi.getThinkingLevel()
+        : "off";
       const sessionId =
         ctx.sessionManager.getSessionId()?.slice(0, 8) || "none";
       const sessionName = pi.getSessionName() || sessionId;

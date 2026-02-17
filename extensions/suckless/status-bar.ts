@@ -55,7 +55,10 @@ export default function statusBarExtension(pi: ExtensionAPI) {
         : "off";
       const sessionId =
         ctx.sessionManager.getSessionId()?.slice(0, 8) || "none";
-      const sessionName = pi.getSessionName() || sessionId;
+      // Use getSessionName if available, otherwise use sessionId
+      const sessionName = typeof pi.getSessionName === "function"
+        ? pi.getSessionName()
+        : sessionId;
 
       const branch = getGitBranch(ctx.cwd);
       const commit = getGitCommit(ctx.cwd);

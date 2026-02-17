@@ -10,16 +10,16 @@
 
 | Component | LOC | Description |
 |-----------|-----|-------------|
-| `conf-parser.ts` | 242 | Parse .conf files with error reporting |
+| `conf-parser.ts` | 241 | Parse .conf files with error reporting |
 | `alias-api.ts` | 115 | Wrap ExtensionAPI for aliases |
-| `index.ts` | 180 | Auto-discovery + loader |
-| **Manager Total** | **537** | Pure TypeScript, no deps |
+| `index.ts` | 229 | Auto-discovery + loader |
+| **Manager Total** | **585** | Pure TypeScript, no deps |
 | | | |
 | `extensions.conf` | 22 | Only disabled extensions (4 lines) |
 | `commands.conf` | 27 | Project aliases (minimal) |
 | **Config Total** | **49** | Plain text, grep-able |
 | | | |
-| **Grand Total** | **586** | Without docs |
+| **Grand Total** | **634** | Without docs |
 | **With Docs** | **~1000** | Including this file |
 
 ### Comparison
@@ -460,9 +460,9 @@ nano ~/.pi/commands.conf  # Edit with your shortcuts
 - [ ] Update README.md
 
 ### System Stats (Final)
-- **Manager:** 537 LOC (3 files)
+- **Manager:** 585 LOC (3 files)
 - **Config:** 49 LOC (2 files, 4 lines active)
-- **Total:** 586 LOC
+- **Total:** 634 LOC
 - **With docs:** ~1000 LOC
 
 **Suckless win:** No duplication. Drop files in `extensions/`, auto-loaded.

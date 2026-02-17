@@ -64,10 +64,13 @@ function loadPackageExtensions(rootDir: string): string[] {
  */
 async function loadExtension(
   extPath: string,
-  api: ExtensionAPI
+  api: ExtensionAPI,
+  projectRoot: string
 ): Promise<void> {
   try {
-    const module = await import(extPath);
+    // Resolve path relative to project root
+    const resolvedPath = join(projectRoot, extPath);
+    const module = await import(resolvedPath);
     if (module.default && typeof module.default === "function") {
       await module.default(api);
       console.log(`[manager] Loaded: ${extPath}`);
@@ -121,7 +124,7 @@ export async function loadExtensions(
 
   // Load extensions sequentially to avoid race conditions
   for (const ext of enabledExtensions) {
-    await loadExtension(ext, api);
+    await loadExtension(ext, api, projectRoot);
   }
 
   console.log("[manager] Extension manager initialized");

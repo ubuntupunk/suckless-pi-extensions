@@ -98,9 +98,15 @@ export function isPrintableChar(data: string): boolean {
 // GIT
 // ============================================================================
 
+const GIT_TIMEOUT = 2000; // 2 second timeout for git commands
+
 export function isGitRepo(cwd: string): boolean {
   try {
-    execSync("git rev-parse --is-inside-work-tree", { cwd, stdio: "ignore" });
+    execSync("git rev-parse --is-inside-work-tree", {
+      cwd,
+      stdio: "ignore",
+      timeout: GIT_TIMEOUT,
+    });
     return true;
   } catch {
     return false;
@@ -113,7 +119,9 @@ export function getGitFileList(cwd: string): string[] {
       cwd,
       encoding: "utf-8",
       stdio: "pipe",
+      timeout: GIT_TIMEOUT,
     });
+    if (!output.trim()) return [];
     return output.trim().split("\n");
   } catch {
     return [];
@@ -127,6 +135,7 @@ export function getGitStatus(cwd: string): Map<string, string> {
       cwd,
       encoding: "utf-8",
       stdio: "pipe",
+      timeout: GIT_TIMEOUT,
     });
     const lines = output.trim().split("\n");
     for (const line of lines) {
@@ -146,6 +155,7 @@ export function getGitDiffStats(cwd: string): Map<string, DiffStats> {
       cwd,
       encoding: "utf-8",
       stdio: "pipe",
+      timeout: GIT_TIMEOUT,
     });
     const lines = output.trim().split("\n");
     for (const line of lines) {
@@ -167,6 +177,7 @@ export function getGitBranch(cwd: string): string {
       cwd,
       encoding: "utf-8",
       stdio: "pipe",
+      timeout: GIT_TIMEOUT,
     }).trim();
   } catch {
     return "";
@@ -186,6 +197,55 @@ function compareNodes(a: FileNode, b: FileNode): number {
 
 export function sortChildren(node: FileNode): void {
   if (node.children?.length) node.children.sort(compareNodes);
+}
+
+/**
+ * Scan filesystem directly (non-git fallback)
+ */
+export function scanDirectory(cwd: string, ignored: Set<string>, depth = 0): FileNode | null {
+  if (depth > MAX_TREE_DEPTH) return null;
+
+  const node: FileNode = {
+    name: depth === 0 ? "." : basename(cwd),
+    path: cwd,
+    isDirectory: true,
+    children: [],
+    expanded: depth < 2, // Auto-expand first 2 levels
+    hasChangedChildren: false,
+  };
+
+  try {
+    const entries = execSync(`ls -1p "${cwd}"`, {
+      encoding: "utf-8",
+      timeout: 2000,
+    }).trim().split("\n").filter(Boolean);
+
+    for (const entry of entries) {
+      const isDir = entry.endsWith("/");
+      const name = isDir ? entry.slice(0, -1) : entry;
+
+      if (ignored.has(name) || name.startsWith(".")) continue;
+
+      const fullPath = join(cwd, name);
+
+      if (isDir) {
+        const childNode = scanDirectory(fullPath, ignored, depth + 1);
+        if (childNode) node.children?.push(childNode);
+      } else {
+        node.children?.push({
+          name,
+          path: fullPath,
+          isDirectory: false,
+        });
+      }
+    }
+  } catch (e: any) {
+    // Silently fail on permission errors
+    return null;
+  }
+
+  sortChildren(node);
+  return node;
 }
 
 export function updateTreeStats(root: FileNode | null): void {
@@ -466,12 +526,49 @@ export function createViewer(
     searchIndex: 0,
     lastRenderWidth: 0,
     height: DEFAULT_VIEWER_HEIGHT,
+    loading: false,
+    loadError: "",
   };
   const _resetSearch = () => {
     state.searchQuery = "";
     state.searchMatches = [];
     state.searchIndex = 0;
   };
+
+  const loadContentSafely = (width: number) => {
+    if (state.loading) return;
+    state.loading = true;
+    state.loadError = "";
+    try {
+      if (!state.file) return;
+      // Check file size before loading
+      try {
+        const stats = statSync(state.file.path);
+        if (stats.size > MAX_LINE_COUNT_BYTES * 10) {
+          state.content = [theme.fg("warning", `File too large (${Math.round(stats.size / 1024)}KB)`), theme.fg("dim", "Use an external editor to view")];
+          state.loading = false;
+          return;
+        }
+      } catch (e: any) {
+        state.content = [theme.fg("error", `Cannot access file: ${e.message}`)];
+        state.loading = false;
+        return;
+      }
+      state.content = loadFileContent(
+        state.file.path,
+        cwd,
+        state.diffMode,
+        !!state.file.gitStatus,
+        width,
+      );
+    } catch (e: any) {
+      state.content = [theme.fg("error", `Error: ${e.message}`)];
+      state.loadError = e.message;
+    } finally {
+      state.loading = false;
+    }
+  };
+
   return {
     isOpen: () => !!state.file,
     getFile: () => state.file,
@@ -480,8 +577,38 @@ export function createViewer(
       state.scroll = 0;
       state.diffMode = !!file.gitStatus && !isUntrackedStatus(file.gitStatus);
       state.mode = "normal";
-      state.content = [];
+      state.content = [theme.fg("dim", "Loading...")];
       state.lastRenderWidth = 0;
+      state.loading = false;
+      state.loadError = "";
+
+      // Check for large files
+      try {
+        const stats = statSync(file.path);
+        if (stats.size > MAX_LINE_COUNT_BYTES * 5) {
+          state.content = [
+            theme.fg("warning", `⚠ Large file (${Math.round(stats.size / 1024)}KB)`),
+            "",
+            theme.fg("dim", "File is too large for comfortable viewing."),
+            theme.fg("dim", "Consider using an external editor."),
+            "",
+            theme.fg("accent", "Press Enter to view anyway"),
+          ];
+          // Still try to load raw content
+          try {
+            state.rawContent = readFileSync(file.path, "utf-8");
+            file.lineCount = state.rawContent.split("\n").length;
+          } catch {
+            state.rawContent = "";
+            file.lineCount = undefined;
+          }
+          state.loading = false;
+          return;
+        }
+      } catch (e: any) {
+        // Ignore stat errors, proceed with loading
+      }
+
       try {
         state.rawContent = readFileSync(file.path, "utf-8");
         file.lineCount = state.rawContent.split("\n").length;
@@ -489,6 +616,8 @@ export function createViewer(
         state.rawContent = "";
         file.lineCount = undefined;
       }
+      // Load content immediately but with safeguards
+      loadContentSafely(80);
     },
     updateFileRef: (file: FileNode | null) => {
       state.file = file;
@@ -497,65 +626,82 @@ export function createViewer(
       state.file = null;
       state.content = [];
       state.mode = "normal";
+      state.loading = false;
     },
     render: (width: number) => {
       if (!state.file) return [];
-      if (state.lastRenderWidth !== width || state.content.length === 0) {
-        state.content = loadFileContent(
-          state.file.path,
-          cwd,
-          state.diffMode,
-          !!state.file.gitStatus,
-          width,
-        );
+      try {
+        // Reload if width changed and not loading
+        if (state.lastRenderWidth !== width && !state.loading && !state.loadError) {
+          loadContentSafely(width);
+        }
         state.lastRenderWidth = width;
+
+        const lines = [
+          truncateToWidth(
+            theme.bold(state.file.name) +
+              (state.diffMode ? theme.fg("warning", " [DIFF]") : "") +
+              (state.loading ? theme.fg("dim", " (loading...)") : ""),
+            width,
+          ),
+          theme.fg("borderMuted", "─".repeat(width)),
+        ];
+        const visible = state.content.slice(
+          state.scroll,
+          state.scroll + state.height,
+        );
+        for (let i = 0; i < state.height; i++) {
+          if (i < visible.length)
+            lines.push(truncateToWidth(visible[i] || "", width));
+          else lines.push(theme.fg("dim", "~"));
+        }
+        lines.push(
+          theme.fg("borderMuted", "─".repeat(width)),
+          truncateToWidth(
+            theme.fg("dim", `j/k: scroll  d: diff  q: back`),
+            width,
+          ),
+        );
+        return lines;
+      } catch (e: any) {
+        return [
+          theme.fg("error", "Viewer error"),
+          theme.fg("dim", e.message),
+          theme.fg("dim", "Press q to close"),
+        ];
       }
-      const lines = [
-        truncateToWidth(
-          theme.bold(state.file.name) +
-            (state.diffMode ? theme.fg("warning", " [DIFF]") : ""),
-          width,
-        ),
-        theme.fg("borderMuted", "─".repeat(width)),
-      ];
-      const visible = state.content.slice(
-        state.scroll,
-        state.scroll + state.height,
-      );
-      for (let i = 0; i < state.height; i++) {
-        if (i < visible.length)
-          lines.push(truncateToWidth(visible[i] || "", width));
-        else lines.push(theme.fg("dim", "~"));
-      }
-      lines.push(
-        theme.fg("borderMuted", "─".repeat(width)),
-        truncateToWidth(
-          theme.fg("dim", `j/k: scroll  d: diff  q: back`),
-          width,
-        ),
-      );
-      return lines;
     },
     handleInput: (data: string) => {
       if (!state.file) return { type: "none" };
-      if (matchesKey(data, "q")) return { type: "close" };
-      if (matchesKey(data, "j") || matchesKey(data, Key.down)) {
-        state.scroll = Math.min(
-          Math.max(0, state.content.length - VIEWER_SCROLL_MARGIN),
-          state.scroll + 1,
-        );
-      }
-      if (matchesKey(data, "k") || matchesKey(data, Key.up)) {
-        state.scroll = Math.max(0, state.scroll - 1);
-      }
-      if (
-        matchesKey(data, "d") &&
-        state.file.gitStatus &&
-        !isUntrackedStatus(state.file.gitStatus)
-      ) {
-        state.diffMode = !state.diffMode;
-        state.lastRenderWidth = 0;
-        state.scroll = 0;
+      try {
+        if (matchesKey(data, "q")) return { type: "close" };
+        if (matchesKey(data, "j") || matchesKey(data, Key.down)) {
+          state.scroll = Math.min(
+            Math.max(0, state.content.length - VIEWER_SCROLL_MARGIN),
+            state.scroll + 1,
+          );
+        }
+        if (matchesKey(data, "k") || matchesKey(data, Key.up)) {
+          state.scroll = Math.max(0, state.scroll - 1);
+        }
+        if (
+          matchesKey(data, "d") &&
+          state.file.gitStatus &&
+          !isUntrackedStatus(state.file.gitStatus) &&
+          !state.loading
+        ) {
+          state.diffMode = !state.diffMode;
+          state.lastRenderWidth = 0;
+          state.scroll = 0;
+          loadContentSafely(state.lastRenderWidth || 80);
+        }
+        // Allow viewing large files with Enter
+        if (matchesKey(data, Key.enter) && state.loadError) {
+          // Retry loading
+          loadContentSafely(state.lastRenderWidth || 80);
+        }
+      } catch (e: any) {
+        // Silently handle input errors
       }
       return { type: "none" };
     },
@@ -574,22 +720,29 @@ export function createFileBrowser(
   requestComment: (p: CommentPayload, c: string) => void,
   _requestRender: () => void,
 ) {
-  const ignored = new Set(["node_modules", ".git", "dist", "build"]);
+  const ignored = new Set(["node_modules", ".git", "dist", "build", "__pycache__", ".venv", "venv"]);
   const repo = isGitRepo(cwd);
   const gitStatus = repo ? getGitStatus(cwd) : new Map<string, string>();
   const diffStats = repo ? getGitDiffStats(cwd) : new Map<string, DiffStats>();
   const gitBranch = repo ? getGitBranch(cwd) : "";
   const viewer = createViewer(cwd, theme, requestComment);
-  const root = repo
-    ? buildFileTreeFromPaths(
-        cwd,
-        getGitFileList(cwd),
-        gitStatus,
-        diffStats,
-        ignored,
-        agentModifiedFiles,
-      )
-    : { name: ".", path: cwd, isDirectory: true, expanded: true };
+
+  // Use git file list if available, otherwise scan filesystem
+  let root: FileNode;
+  if (repo) {
+    root = buildFileTreeFromPaths(
+      cwd,
+      getGitFileList(cwd),
+      gitStatus,
+      diffStats,
+      ignored,
+      agentModifiedFiles,
+    );
+  } else {
+    // Fallback to direct filesystem scan
+    root = scanDirectory(cwd, ignored, 0) || { name: ".", path: cwd, isDirectory: true, expanded: true, children: [] };
+  }
+
   const state = {
     root,
     flatList: [] as FlatNode[],
@@ -623,45 +776,127 @@ export function createFileBrowser(
       for (let i = start; i < end; i++) {
         const { node, depth } = displayList[i];
         const isSelected = i === state.selectedIndex;
-        const line = truncateToWidth(
-          "  ".repeat(depth) +
-            (node.isDirectory ? (node.expanded ? "▼ " : "▶ ") : "  ") +
-            node.name,
-          width,
-        );
-        lines.push(isSelected ? theme.bg("selectedBg", line) : line);
+        const prefix = "  ".repeat(depth) + (node.isDirectory ? (node.expanded ? "▼ " : "▶ ") : "  ");
+        const namePart = node.name;
+
+        // Add git status indicators
+        let statusIndicator = "";
+        if (node.gitStatus) {
+          if (isUntrackedStatus(node.gitStatus)) statusIndicator = theme.fg("dim", " ?");
+          else if (node.gitStatus.includes("M")) statusIndicator = theme.fg("warning", " M");
+          else if (node.gitStatus.includes("A")) statusIndicator = theme.fg("success", " A");
+          else if (node.gitStatus.includes("D")) statusIndicator = theme.fg("error", " D");
+          else statusIndicator = theme.fg("dim", ` ${node.gitStatus}`);
+        }
+        if (node.agentModified) {
+          statusIndicator = theme.fg("accent", " *");
+        }
+
+        const rawLine = prefix + namePart + statusIndicator;
+        const line = truncateToWidth(rawLine, width - 1);
+
+        // Use bold + accent for selected item (more reliable than bg)
+        if (isSelected) {
+          lines.push(theme.fg("accent", "▌ ") + theme.bold(line));
+        } else {
+          lines.push("  " + line);
+        }
       }
       lines.push(
         theme.fg("borderMuted", "─".repeat(width)),
         truncateToWidth(
-          theme.fg("dim", "j/k: nav  Enter: open  q: close"),
+          theme.fg("dim", "j/k: nav  h/l: collapse/expand  Enter: open  q: close"),
           width,
         ),
       );
       return lines;
     },
     handleInput: (data: string) => {
-      if (viewer.isOpen()) {
-        if (viewer.handleInput(data).type === "close") viewer.close();
-        return;
-      }
-      if (matchesKey(data, "q")) onClose();
-      if (matchesKey(data, "j") || matchesKey(data, Key.down))
-        state.selectedIndex = Math.min(
-          state.flatList.length - 1,
-          state.selectedIndex + 1,
-        );
-      if (matchesKey(data, "k") || matchesKey(data, Key.up))
-        state.selectedIndex = Math.max(0, state.selectedIndex - 1);
-      if (matchesKey(data, Key.enter)) {
-        const item = state.flatList[state.selectedIndex];
-        if (item?.node.isDirectory) {
-          item.node.expanded = !item.node.expanded;
-          state.flatList = flattenTree(state.root as FileNode);
-        } else if (item) viewer.setFile(item.node);
+      try {
+        if (viewer.isOpen()) {
+          const result = viewer.handleInput(data);
+          if (result.type === "close") {
+            viewer.close();
+          }
+          return;
+        }
+        if (matchesKey(data, "q")) {
+          onClose();
+          return;
+        }
+        if (matchesKey(data, "j") || matchesKey(data, Key.down)) {
+          state.selectedIndex = Math.min(
+            state.flatList.length - 1,
+            state.selectedIndex + 1,
+          );
+          return;
+        }
+        if (matchesKey(data, "k") || matchesKey(data, Key.up)) {
+          state.selectedIndex = Math.max(0, state.selectedIndex - 1);
+          return;
+        }
+        // h to collapse directory
+        if (matchesKey(data, "h") || matchesKey(data, Key.left)) {
+          const item = state.flatList[state.selectedIndex];
+          if (item?.node.isDirectory) {
+            item.node.expanded = false;
+            state.flatList = flattenTree(state.root as FileNode);
+            const foundIdx = state.flatList.findIndex(f => f.node.path === item.node.path);
+            state.selectedIndex = foundIdx >= 0 ? foundIdx : 0;
+          } else {
+            // Go to parent directory
+            const current = state.flatList[state.selectedIndex]?.node.path;
+            if (current) {
+              const parentPath = join(current, "..");
+              const foundIdx = state.flatList.findIndex(f => f.node.path === parentPath);
+              if (foundIdx >= 0) state.selectedIndex = foundIdx;
+            }
+          }
+          return;
+        }
+        // l to expand directory
+        if (matchesKey(data, "l") || matchesKey(data, Key.right)) {
+          const item = state.flatList[state.selectedIndex];
+          if (item?.node.isDirectory && !item.node.expanded) {
+            item.node.expanded = true;
+            state.flatList = flattenTree(state.root as FileNode);
+            const foundIdx = state.flatList.findIndex(f => f.node.path === item.node.path);
+            state.selectedIndex = foundIdx >= 0 ? foundIdx : 0;
+          }
+          return;
+        }
+        if (matchesKey(data, Key.enter)) {
+          const item = state.flatList[state.selectedIndex];
+          if (!item) return;
+          if (item.node.isDirectory) {
+            item.node.expanded = !item.node.expanded;
+            state.flatList = flattenTree(state.root as FileNode);
+            // Re-find selected index after tree change
+            const newFlat = state.flatList;
+            const foundIdx = newFlat.findIndex(f => f.node.path === item.node.path);
+            state.selectedIndex = foundIdx >= 0 ? foundIdx : 0;
+          } else {
+            // Check file size before opening
+            try {
+              const stats = statSync(item.node.path);
+              const sizeKB = Math.round(stats.size / 1024);
+              if (sizeKB > 2000) { // 2MB threshold
+                // Show warning but allow opening
+                item.node.lineCount = 999999; // Mark as large
+              }
+            } catch {}
+            viewer.setFile(item.node);
+          }
+          return;
+        }
+      } catch (err) {
+        // Silently handle errors to prevent UI freeze
+        console.error("[files-widget] handleInput error:", err);
       }
     },
-    invalidate: () => {},
+    invalidate: () => {
+      // Force re-render on next render call
+    },
   };
 }
 

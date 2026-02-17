@@ -7,6 +7,7 @@
 
 import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { Key, matchesKey } from "@mariozechner/pi-tui";
 
 import {
   createFileBrowser,
@@ -21,10 +22,20 @@ export default function fileBrowserExtension(pi: ExtensionAPI): void {
   pi.registerCommand("browse", {
     description: "Open file browser",
     handler: async (_args, ctx) => {
+      if (!ctx.hasUI) {
+        ctx.ui.notify("File browser requires TUI", "error");
+        return;
+      }
+
+      ctx.ui.notify("Opening file browser - j/k navigate, Enter open, q close", "info");
+      
       await ctx.ui.custom<void>((tui, theme, _kb, done) => {
         let pollInterval: ReturnType<typeof setInterval> | null = null;
+        let isClosed = false;
 
         const cleanup = () => {
+          if (isClosed) return;
+          isClosed = true;
           if (pollInterval) {
             clearInterval(pollInterval);
             pollInterval = null;
@@ -39,7 +50,10 @@ export default function fileBrowserExtension(pi: ExtensionAPI): void {
           } as any);
         };
 
-        const requestRender = () => tui.requestRender();
+        const requestRender = () => {
+          if (!isClosed) tui.requestRender();
+        };
+
         const browser = createFileBrowser(
           cwd,
           agentModifiedFiles,
@@ -49,17 +63,33 @@ export default function fileBrowserExtension(pi: ExtensionAPI): void {
           requestRender,
         );
 
+        // Poll for git changes
         pollInterval = setInterval(() => {
-          requestRender();
+          if (!isClosed) {
+            requestRender();
+          }
         }, POLL_INTERVAL_MS);
 
         return {
-          render: (w) => browser.render(w),
-          handleInput: (data) => {
+          render: (width: number) => {
+            if (isClosed) return [];
+            return browser.render(width);
+          },
+          handleInput: (data: string) => {
+            if (isClosed) return;
+            
+            // Handle escape key to close
+            if (matchesKey(data, Key.escape)) {
+              cleanup();
+              return;
+            }
+            
             browser.handleInput(data);
             requestRender();
           },
-          invalidate: () => browser.invalidate(),
+          invalidate: () => {
+            if (!isClosed) browser.invalidate();
+          },
         };
       });
     },

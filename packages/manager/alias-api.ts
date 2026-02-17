@@ -204,7 +204,8 @@ export class AliasAPI implements ExtensionAPI {
   }
 
   get events(): any {
-    return this.original.events;
+    // Ensure events is always available, even if original doesn't have it
+    return this.original.events || { on: () => {}, off: () => {}, emit: () => {} };
   }
 }
 

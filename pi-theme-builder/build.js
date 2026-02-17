@@ -30,16 +30,25 @@ const REQUIRED_KEYS = [
     "thinkingLow", "thinkingMedium", "thinkingHigh", "thinkingXhigh", "bashMode"
 ];
 
-const compile = (customName = null) => {
+export const compile = (customName = null) => {
+    console.log(`[${new Date().toLocaleTimeString()}] Starting SCSS compilation...`);
     try {
-        console.log('🎨 Compiling SCSS...');
-        
-        // 1. Compile SCSS to CSS
-        const result = sass.compile(INPUT_SCSS, { style: 'expanded' });
-        const css = result.css;
+        let css;
+        try {
+            // 1. Compile SCSS to CSS
+            const result = sass.compile(INPUT_SCSS, { style: 'expanded' });
+            css = result.css;
+            console.log(`[${new Date().toLocaleTimeString()}] SCSS compiled successfully.`);
+        } catch (sassErr) {
+            console.error(`❌ SCSS Compilation Failed: ${sassErr.message}`);
+            // Log full error object for more details
+            console.error(sassErr); 
+            return; // Stop further processing if SCSS compilation fails
+        }
 
         // 2. Write CSS for the HTML Preview
         fs.writeFileSync(PREVIEW_CSS, css);
+        console.log(`[${new Date().toLocaleTimeString()}] Preview CSS written to ${PREVIEW_CSS}`);
 
         // Helper function to round RGB values to integers
         const roundRgb = (value) => {
@@ -52,6 +61,18 @@ const compile = (customName = null) => {
             });
         };
 
+        // Converts rgb(...) to hex color string
+        function rgbToHex(value) {
+            const rgbMatch = value.match(/^rgb\(\s*([0-9]+),\s*([0-9]+),\s*([0-9]+)\s*\)$/i);
+            if (rgbMatch) {
+                const r = parseInt(rgbMatch[1], 10);
+                const g = parseInt(rgbMatch[2], 10);
+                const b = parseInt(rgbMatch[3], 10);
+                return '#' + [r,g,b].map(x => x.toString(16).padStart(2, '0')).join('');
+            }
+            return value;
+        }
+
         // 3. Parse CSS Variables to build JSON
         // We look for the :root { ... } block and extract --key: value;
         const colors = {};
@@ -63,6 +84,7 @@ const compile = (customName = null) => {
                 let value = match[1].trim();
                 // Round RGB values to integers
                 value = roundRgb(value);
+                value = rgbToHex(value); // convert rgb() to hex
                 colors[key] = value;
             } else {
                 // Don't warn for every compile, only if needed
@@ -85,9 +107,11 @@ const compile = (customName = null) => {
         
         console.log(`✅ Theme updated: ${outputPath}`);
         console.log(`✨ Preview updated: ${PREVIEW_CSS}`);
+        console.log(`[${new Date().toLocaleTimeString()}] SCSS compilation process finished.`);
 
     } catch (err) {
-        console.error('❌ Compilation Error:', err.message);
+        console.error(`❌ General Compilation Error in build.js: ${err.message}`);
+        console.error(err);
     }
 };
 

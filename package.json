@@ -18,34 +18,7 @@
     "manager": {
       "enabled": true,
       "config": ".pi/",
-      "userConfig": "~/.pi/",
-      "managedExtensions": [
-        "extensions/suckless/status-bar.ts",
-        "extensions/suckless/core-tools.ts",
-        "extensions/utility/theme-selector/index.ts",
-        "extensions/utility/processes/index.ts",
-        "extensions/utility/introspection/index.ts",
-        "extensions/utility/subagents/index.ts",
-        "extensions/utility/breadcrumbs/index.ts",
-        "extensions/utility/neovim/index.ts",
-        "extensions/utility/notification-hook/index.ts",
-        "extensions/utility/presenter/index.ts",
-        "extensions/utility/providers/index.ts",
-        "extensions/utility/review-tools/index.ts",
-        "extensions/utility/session-naming/index.ts",
-        "extensions/utility/system-prompt-viewer/index.ts",
-        "extensions/utility/brave-search/index.ts",
-        "extensions/functional/extension-dev/index.ts",
-        "extensions/functional/guardrails/index.ts",
-        "extensions/functional/files-widget/index.ts",
-        "extensions/functional/planning/index.ts",
-        "extensions/functional/sucks-warning/index.ts",
-        "extensions/functional/memory-mode.ts",
-        "extensions/functional/ralph-loop.ts",
-        "extensions/suckless/session-emoji.ts",
-        "extensions/utility/checkpoint/index.ts",
-        "extensions/functional/test-ext/index.ts"
-      ]
+      "userConfig": "~/.pi/"
     },
     "skills": [
       "skills/"

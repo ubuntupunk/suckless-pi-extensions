@@ -1,44 +1,44 @@
 :root {
-  /* Core UI */
-  --accent: #3584e4;
+  /* Core UI (11 colors) */
+  --accent: #00aaff;
   --border: #888888;
-  --borderAccent: #3584e4;
+  --borderAccent: #00aaff;
   --borderMuted: #555555;
   --success: #44ff44;
   --error: #ff4444;
   --warning: #ffff00;
   --muted: #888888;
-  --dim: rgb(59.5, 59.5, 59.5);
-  --text: ""; /* Default terminal text */
+  --dim: #3c3c3c;
+  --text: #cccccc;
   --thinkingText: #888888;
-  /* Backgrounds & Content */
-  --selectedBg: rgb(144.643153527, 143.7385892116, 148.2614107884);
-  --userMessageBg: #77767b;
-  --userMessageText: "";
-  --customMessageBg: #77767b;
-  --customMessageText: "";
-  --customMessageLabel: #3584e4;
-  --toolPendingBg: rgb(112.4, 119.4, 133.5);
-  --toolSuccessBg: rgb(113.9, 131.7, 117.5);
-  --toolErrorBg: rgb(132.6, 113, 117.5);
-  --toolTitle: #3584e4;
-  --toolOutput: "";
-  /* Markdown */
-  --mdHeading: #3584e4;
-  --mdLink: #3584e4;
+  /* Backgrounds & Content (11 colors) */
+  --selectedBg: #2a2a2a;
+  --userMessageBg: #111111;
+  --userMessageText: #cccccc;
+  --customMessageBg: #111111;
+  --customMessageText: #cccccc;
+  --customMessageLabel: #00aaff;
+  --toolPendingBg: #0f2029;
+  --toolSuccessBg: #162916;
+  --toolErrorBg: #291616;
+  --toolTitle: #00aaff;
+  --toolOutput: #bbbbbb;
+  /* Markdown (10 colors) */
+  --mdHeading: #00aaff;
+  --mdLink: #00aaff;
   --mdLinkUrl: #888888;
   --mdCode: #00ffff;
-  --mdCodeBlock: "";
+  --mdCodeBlock: #1e1e1e;
   --mdCodeBlockBorder: #888888;
   --mdQuote: #888888;
   --mdQuoteBorder: #888888;
   --mdHr: #888888;
   --mdListBullet: #00ffff;
-  /* Tool Diffs */
+  /* Tool Diffs (3 colors) */
   --toolDiffAdded: #44ff44;
   --toolDiffRemoved: #ff4444;
   --toolDiffContext: #888888;
-  /* Syntax Highlighting */
+  /* Syntax Highlighting (9 colors) */
   --syntaxComment: #6a9955;
   --syntaxKeyword: #c586c0;
   --syntaxFunction: #dcdcaa;
@@ -48,22 +48,23 @@
   --syntaxType: #4ec9b0;
   --syntaxOperator: #d4d4d4;
   --syntaxPunctuation: #d4d4d4;
-  /* Thinking Levels (Borders) */
+  /* Thinking Levels (6 colors) */
   --thinkingOff: #888888;
-  --thinkingMinimal: #3584e4;
+  --thinkingMinimal: #00aaff;
   --thinkingLow: #00aaff;
   --thinkingMedium: #00ffff;
   --thinkingHigh: #ff00ff;
   --thinkingXhigh: #ff0000;
-  /* Modes */
+  /* Modes (1 color) */
   --bashMode: #ffaa00;
 }
 
 body {
-  background-color: #000;
-  color: #ccc;
+  background-color: var(--userMessageBg); /* Updated to use theme variable */
+  color: var(--text);
   font-family: "Consolas", "Monaco", monospace;
   padding: 20px;
+  transition: background-color 0.3s ease;
 }
 
 .pi-interface {
@@ -100,6 +101,18 @@ body {
   border: 1px solid var(--borderMuted);
   padding: 10px;
   margin: 10px 0;
+  border-radius: 4px;
+}
+
+.tool-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.tool-output {
+  margin-top: 5px;
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 
 .thinking {
@@ -116,4 +129,25 @@ body {
   color: var(--text);
   /* Simulate the thinking border changing */
   border-color: var(--thinkingMinimal);
+}
+
+.footer {
+  border-top: 1px solid var(--borderMuted);
+  padding: 10px;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+}
+
+ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+a {
+  text-decoration: underline;
 }

@@ -1,6 +1,8 @@
 # Suckless Extensions Management
 
-> Philosophy: **Configuration over convention. Simplicity over elegance. Less is more.**
+> Philosophy: **Convention over configuration. Auto-discover. Disable only what you don't want.**
+>
+> **Less is more:** No managedExtensions list. Drop files in `extensions/`, they're auto-loaded.
 
 ---
 
@@ -8,34 +10,34 @@
 
 | Component | LOC | Description |
 |-----------|-----|-------------|
-| `conf-parser.ts` | 234 | Parse .conf files with error reporting |
+| `conf-parser.ts` | 242 | Parse .conf files with error reporting |
 | `alias-api.ts` | 115 | Wrap ExtensionAPI for aliases |
-| `index.ts` | 180 | Main loader with hybrid config |
-| **Manager Total** | **529** | ~350 estimated, actually 529 LOC |
+| `index.ts` | 180 | Auto-discovery + loader |
+| **Manager Total** | **537** | Pure TypeScript, no deps |
 | | | |
-| `extensions.conf` | 48 | Project defaults (25 extensions) |
+| `extensions.conf` | 22 | Only disabled extensions (4 lines) |
 | `commands.conf` | 27 | Project aliases (minimal) |
-| **Config Total** | **75** | Plain text, grep-able |
+| **Config Total** | **49** | Plain text, grep-able |
 | | | |
-| **Grand Total** | **604** | Without docs |
-| **With Docs** | **1041** | Including this file |
+| **Grand Total** | **586** | Without docs |
+| **With Docs** | **~1000** | Including this file |
 
 ### Comparison
 
 | Approach | LOC | Complexity |
 |----------|-----|------------|
-| **Suckless Manager** | 604 | Simple .conf files |
+| **Suckless Manager** | 586 | Auto-discover, disable-only config |
+| With managedExtensions | ~650 | Duplication of config |
 | Database/Registry | ~2000+ | Schema, migrations, deps |
 | Full Plugin System | ~5000+ | Lifecycle, hooks, sandbox |
 | Pi Built-in (est.) | ~10000+ | Complete framework |
 
-Suckless Wins.
-
-**We chose less.** 604 lines gives us:
-- Enable/disable extensions
+**We chose less.** 586 lines gives us:
+- Auto-discovery of extensions (no list to maintain)
+- Enable/disable via simple config
 - Command aliases
 - Groups and hiding
-- User overrides
+- User overrides (~/.pi/)
 - Zero runtime overhead
 - No dependencies
 - Grep-able configs
@@ -117,32 +119,29 @@ User disable → Project enable → Extension DISABLED
 
 ### `extensions.conf`
 
-Enable or disable extensions without editing `package.json`.
+Enable or disable extensions. **Default: ALL enabled.**
 
 **Location:** `.pi/extensions.conf` (project) or `~/.pi/extensions.conf` (user)
 
 ```ini
-# Format: [enable|disable] <path>
-# Lines starting with # are comments
+# Format: disable <path>
+# Default: ALL extensions enabled automatically
+# Only list what you want to DISABLE
 
-# Core extensions
-enable extensions/suckless/status-bar.ts
-enable extensions/suckless/core-tools.ts
-
-# Functional extensions
-enable extensions/functional/files-widget/index.ts
-enable extensions/functional/planning/index.ts
+# Experimental / unstable
+disable extensions/functional/memory-mode.ts
 disable extensions/functional/ralph-loop.ts
 
-# Utility extensions
-enable extensions/utility/brave-search/index.ts
-enable extensions/utility/neovim/index.ts
-disable extensions/utility/checkpoint/index.ts
-
-# Development (disable in production)
+# Development / testing
 disable extensions/functional/test-ext/index.ts
+
+# Debugging tools
 disable extensions/utility/introspection/index.ts
 ```
+
+**To enable an extension:** Just drop it in `extensions/` - no config needed!
+
+**To disable:** Add one line to `extensions.conf`.
 
 ### `commands.conf`
 
@@ -451,25 +450,22 @@ nano ~/.pi/commands.conf  # Edit with your shortcuts
 
 ## Progress Log
 
-### 2026-02-17 - Integration Complete
-- [x] Document architecture in SUCKLESS_EXTENSIONS_MANAGEMENT.md
-- [x] Implement conf-parser.ts (hybrid loading)
-- [x] Implement manager/index.ts
-- [x] Implement alias-api.ts
-- [x] Create .pi/extensions.conf (project defaults)
-- [x] Create .pi/commands.conf (project aliases)
-- [x] Create .pi/commands.conf.user-template
-- [x] Update package.json to use manager
-- [x] Add LOC stats to documentation
+### 2026-02-17 - Suckless Auto-Discovery
+- [x] Auto-discover extensions from `extensions/` directory
+- [x] Remove managedExtensions from package.json
+- [x] Simplify extensions.conf to disable-only
+- [x] Update documentation (586 LOC total)
 - [ ] Test with existing extensions
 - [ ] Create /extensions-status command
 - [ ] Update README.md
 
 ### System Stats (Final)
-- **Manager:** 529 LOC (3 files)
-- **Config:** 75 LOC (2 files)
-- **Total:** 604 LOC
-- **With docs:** 1041 LOC
+- **Manager:** 537 LOC (3 files)
+- **Config:** 49 LOC (2 files, 4 lines active)
+- **Total:** 586 LOC
+- **With docs:** ~1000 LOC
+
+**Suckless win:** No duplication. Drop files in `extensions/`, auto-loaded.
 
 ---
 

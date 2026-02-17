@@ -3,85 +3,141 @@
 // src/theme.scss
 
 // --- 1. PALETTE DEFINITION (Your Playground) ---
-$bg-dark: #77767b;
-$bg-light: #9141ac;
 
-// Suggestions: Use SCSS functions to generate harmonious colors
-$primary: #3584e4;
-$primary-dim: color.mix($primary, $bg-dark, 20%);
-$secondary: #888888;
-$error: #ff4444;
-$success: #44ff44;
+// Core UI
+$pi-accent: #00aaff;
+$pi-border: #888888;
+$pi-borderAccent: #00aaff;
+$pi-borderMuted: #555555;
+$pi-success: #44ff44;
+$pi-error: #ff4444;
+$pi-warning: #ffff00;
+$pi-muted: #888888;
+$pi-dim: #3c3c3c;
+$pi-text: #cccccc;
+$pi-thinkingText: #888888;
+
+// Backgrounds & Content
+$pi-selectedBg: #2a2a2a;
+$pi-userMessageBg: #111111;
+$pi-userMessageText: #cccccc;
+$pi-customMessageBg: #111111;
+$pi-customMessageText: #cccccc;
+$pi-customMessageLabel: #00aaff;
+$pi-toolPendingBg: #0f2029;
+$pi-toolSuccessBg: #162916;
+$pi-toolErrorBg: #291616;
+$pi-toolTitle: #00aaff;
+$pi-toolOutput: #bbbbbb;
+
+// Markdown
+$pi-mdHeading: #00aaff;
+$pi-mdLink: #00aaff;
+$pi-mdLinkUrl: #888888;
+$pi-mdCode: #00ffff;
+$pi-mdCodeBlock: #1e1e1e;
+$pi-mdCodeBlockBorder: #888888;
+$pi-mdQuote: #888888;
+$pi-mdQuoteBorder: #888888;
+$pi-mdHr: #888888;
+$pi-mdListBullet: #00ffff;
+
+// Tool Diffs
+$pi-toolDiffAdded: #44ff44;
+$pi-toolDiffRemoved: #ff4444;
+$pi-toolDiffContext: #888888;
+
+// Syntax Highlighting
+$pi-syntaxComment: #6a9955;
+$pi-syntaxKeyword: #c586c0;
+$pi-syntaxFunction: #dcdcaa;
+$pi-syntaxVariable: #9cdcfe;
+$pi-syntaxString: #ce9178;
+$pi-syntaxNumber: #b5cea8;
+$pi-syntaxType: #4ec9b0;
+$pi-syntaxOperator: #d4d4d4;
+$pi-syntaxPunctuation: #d4d4d4;
+
+// Thinking Levels
+$pi-thinkingOff: #888888;
+$pi-thinkingMinimal: #00aaff;
+$pi-thinkingLow: #00aaff;
+$pi-thinkingMedium: #00ffff;
+$pi-thinkingHigh: #ff00ff;
+$pi-thinkingXhigh: #ff0000;
+
+// Modes
+$pi-bashMode: #ffaa00;
 
 // --- 2. PI THEME MAPPING ---
 // We map SCSS vars to CSS custom properties. 
 // The Builder script scrapes these properties to make the JSON.
 
 :root {
-  /* Core UI */
-  --accent: #{$primary};
-  --border: #{$secondary};
-  --borderAccent: #{$primary};
-  --borderMuted: #{color.adjust($secondary, $lightness: -20%)};
-  --success: #{$success};
-  --error: #{$error};
-  --warning: #ffff00;
-  --muted: #{$secondary};
-  --dim: #{color.adjust($secondary, $lightness: -30%)};
-  --text: ""; /* Default terminal text */
-  --thinkingText: #{$secondary};
+  /* Core UI (11 colors) */
+  --accent: #{$pi-accent};
+  --border: #{$pi-border};
+  --borderAccent: #{$pi-borderAccent};
+  --borderMuted: #{$pi-borderMuted};
+  --success: #{$pi-success};
+  --error: #{$pi-error};
+  --warning: #{$pi-warning};
+  --muted: #{$pi-muted};
+  --dim: #{$pi-dim};
+  --text: #{$pi-text};
+  --thinkingText: #{$pi-thinkingText};
 
-  /* Backgrounds & Content */
-  --selectedBg: #{color.adjust($bg-dark, $lightness: 10%)};
-  --userMessageBg: #{$bg-dark};
-  --userMessageText: "";
-  --customMessageBg: #{$bg-dark};
-  --customMessageText: "";
-  --customMessageLabel: #{$primary};
-  --toolPendingBg: #{color.mix($primary, $bg-dark, 10%)};
-  --toolSuccessBg: #{color.mix($success, $bg-dark, 10%)};
-  --toolErrorBg: #{color.mix($error, $bg-dark, 10%)};
-  --toolTitle: #{$primary};
-  --toolOutput: "";
+  /* Backgrounds & Content (11 colors) */
+  --selectedBg: #{$pi-selectedBg};
+  --userMessageBg: #{$pi-userMessageBg};
+  --userMessageText: #{$pi-userMessageText};
+  --customMessageBg: #{$pi-customMessageBg};
+  --customMessageText: #{$pi-customMessageText};
+  --customMessageLabel: #{$pi-customMessageLabel};
+  --toolPendingBg: #{$pi-toolPendingBg};
+  --toolSuccessBg: #{$pi-toolSuccessBg};
+  --toolErrorBg: #{$pi-toolErrorBg};
+  --toolTitle: #{$pi-toolTitle};
+  --toolOutput: #{$pi-toolOutput};
 
-  /* Markdown */
-  --mdHeading: #{$primary};
-  --mdLink: #{$primary};
-  --mdLinkUrl: #{$secondary};
-  --mdCode: #00ffff;
-  --mdCodeBlock: "";
-  --mdCodeBlockBorder: #{$secondary};
-  --mdQuote: #{$secondary};
-  --mdQuoteBorder: #{$secondary};
-  --mdHr: #{$secondary};
-  --mdListBullet: #00ffff;
+  /* Markdown (10 colors) */
+  --mdHeading: #{$pi-mdHeading};
+  --mdLink: #{$pi-mdLink};
+  --mdLinkUrl: #{$pi-mdLinkUrl};
+  --mdCode: #{$pi-mdCode};
+  --mdCodeBlock: #{$pi-mdCodeBlock};
+  --mdCodeBlockBorder: #{$pi-mdCodeBlockBorder};
+  --mdQuote: #{$pi-mdQuote};
+  --mdQuoteBorder: #{$pi-mdQuoteBorder};
+  --mdHr: #{$pi-mdHr};
+  --mdListBullet: #{$pi-mdListBullet};
 
-  /* Tool Diffs */
-  --toolDiffAdded: #{$success};
-  --toolDiffRemoved: #{$error};
-  --toolDiffContext: #{$secondary};
+  /* Tool Diffs (3 colors) */
+  --toolDiffAdded: #{$pi-toolDiffAdded};
+  --toolDiffRemoved: #{$pi-toolDiffRemoved};
+  --toolDiffContext: #{$pi-toolDiffContext};
 
-  /* Syntax Highlighting */
-  --syntaxComment: #6a9955;
-  --syntaxKeyword: #c586c0;
-  --syntaxFunction: #dcdcaa;
-  --syntaxVariable: #9cdcfe;
-  --syntaxString: #ce9178;
-  --syntaxNumber: #b5cea8;
-  --syntaxType: #4ec9b0;
-  --syntaxOperator: #d4d4d4;
-  --syntaxPunctuation: #d4d4d4;
+  /* Syntax Highlighting (9 colors) */
+  --syntaxComment: #{$pi-syntaxComment};
+  --syntaxKeyword: #{$pi-syntaxKeyword};
+  --syntaxFunction: #{$pi-syntaxFunction};
+  --syntaxVariable: #{$pi-syntaxVariable};
+  --syntaxString: #{$pi-syntaxString};
+  --syntaxNumber: #{$pi-syntaxNumber};
+  --syntaxType: #{$pi-syntaxType};
+  --syntaxOperator: #{$pi-syntaxOperator};
+  --syntaxPunctuation: #{$pi-syntaxPunctuation};
 
-  /* Thinking Levels (Borders) */
-  --thinkingOff: #{$secondary};
-  --thinkingMinimal: #{$primary};
-  --thinkingLow: #00aaff;
-  --thinkingMedium: #00ffff;
-  --thinkingHigh: #ff00ff;
-  --thinkingXhigh: #ff0000;
+  /* Thinking Levels (6 colors) */
+  --thinkingOff: #{$pi-thinkingOff};
+  --thinkingMinimal: #{$pi-thinkingMinimal};
+  --thinkingLow: #{$pi-thinkingLow};
+  --thinkingMedium: #{$pi-thinkingMedium};
+  --thinkingHigh: #{$pi-thinkingHigh};
+  --thinkingXhigh: #{$pi-thinkingXhigh};
 
-  /* Modes */
-  --bashMode: #ffaa00;
+  /* Modes (1 color) */
+  --bashMode: #{$pi-bashMode};
 }
 
 // --- 3. PREVIEW STYLES (Only for the HTML viewer) ---
@@ -127,6 +183,18 @@ body {
   border: 1px solid var(--borderMuted);
   padding: 10px;
   margin: 10px 0;
+  border-radius: 4px;
+}
+
+.tool-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.tool-output {
+  margin-top: 5px;
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 
 .thinking {
@@ -143,4 +211,25 @@ body {
   color: var(--text);
   /* Simulate the thinking border changing */
   border-color: var(--thinkingMinimal); 
+}
+
+.footer {
+  border-top: 1px solid var(--borderMuted);
+  padding: 10px;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+}
+
+ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+a {
+  text-decoration: underline;
 }

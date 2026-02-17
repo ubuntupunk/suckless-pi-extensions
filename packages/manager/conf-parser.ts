@@ -214,21 +214,28 @@ export function loadManagerConfig(rootDir: string = process.cwd()): ManagerConfi
 
 /**
  * Check if an extension should be loaded
+ *
+ * Suckless philosophy: ALL extensions enabled by default.
+ * Only list extensions you want to DISABLE in extensions.conf.
+ *
+ * Format:
+ *   disable extensions/foo/bar.ts  # This extension won't load
+ *   enable extensions/foo/bar.ts   # Override a project default disable
  */
 export function shouldLoadExtension(
   extPath: string,
   config: ExtensionConfig
 ): boolean {
-  // Explicitly disabled
+  // Explicitly disabled takes precedence
   if (config.disabled.has(extPath)) {
     return false;
   }
-  
-  // If enabled list is empty, load all non-disabled extensions
-  if (config.enabled.size === 0) {
+
+  // Explicitly enabled (overrides project defaults)
+  if (config.enabled.has(extPath)) {
     return true;
   }
-  
-  // Explicitly enabled
-  return config.enabled.has(extPath);
+
+  // Default: ENABLED (suckless - no config needed)
+  return true;
 }

@@ -3,33 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pi Theme Preview</title>
+    <title>Pi Theme Builder</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #1e1e1e; color: #fff; }
-        .preview-pane { flex: 1; padding: 20px; overflow-y: auto; background-color: #000; display: flex; justify-content: center; align-items: center; }
-        .editor-pane { width: 300px; background-color: #252526; border-left: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; }
-        .editor-header { padding: 10px; background-color: #333; font-weight: bold; border-bottom: 1px solid #111; }
-        .editor-content { flex: 1; overflow-y: auto; padding: 10px; }
-        .variable-row { margin-bottom: 15px; }
-        .variable-label { display: block; font-size: 12px; margin-bottom: 5px; color: #ccc; font-family: monospace; }
-        .variable-input-group { display: flex; gap: 5px; }
-        input[type="color"] { width: 30px; height: 30px; border: none; padding: 0; background: none; cursor: pointer; }
-        input[type="text"] { flex: 1; background-color: #3c3c3c; border: 1px solid #333; color: #fff; padding: 5px; font-family: monospace; }
-        .pi-interface { border: 1px solid var(--border); width: 100%; max-width: 800px; }
-        /* Existing preview styles embedded here for context */
-        .header { border-bottom: 1px solid var(--borderMuted); padding: 10px; color: var(--accent); font-weight: bold; }
-        .messages { padding: 20px; }
-        .msg-user { background-color: var(--userMessageBg); padding: 10px; margin-bottom: 10px; border-left: 3px solid var(--border); }
-        .msg-assistant { padding: 10px; margin-bottom: 10px; }
-        .tool-block { background-color: var(--toolPendingBg); border: 1px solid var(--borderMuted); padding: 10px; margin: 10px 0; }
-        .thinking { border-left: 2px solid var(--thinkingLow); padding-left: 10px; color: var(--thinkingText); font-style: italic; margin-bottom: 10px; }
-        .editor { border-top: 1px solid var(--thinkingOff); padding: 10px; color: var(--text); border-color: var(--thinkingMinimal); }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #1e1e1e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        /* Layout */
+        .preview-pane { 
+            flex: 1; 
+            padding: 40px; 
+            overflow-y: auto; 
+            /* This background color will be overridden by the theme's body style */
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start;
+        }
+        
+        .editor-pane { 
+            width: 350px; 
+            background-color: #252526; 
+            border-left: 1px solid #333; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+
+        /* Header / Pipeline Controls */
+        .pipeline-header {
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-bottom: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .pipeline-title { font-weight: bold; font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group { display: flex; gap: 5px; }
+        #theme-name { 
+            flex: 1; 
+            background: #333; 
+            border: 1px solid #444; 
+            color: white; 
+            padding: 6px 10px; 
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        button { 
+            cursor: pointer; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        #save-btn { background: #0e639c; color: white; }
+        #save-btn:hover { background: #1177bb; }
+        #compile-btn { background: #333; color: #ccc; }
+        #compile-btn:hover { background: #444; }
+
+        /* Variable Editor */
+        .editor-content { flex: 1; overflow-y: auto; padding: 15px; }
+        .variable-section { margin-bottom: 20px; }
+        .section-title { 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: #666; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid #333; 
+            padding-bottom: 5px; 
+        }
+        
+        .variable-row { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .variable-label { font-size: 12px; color: #ccc; font-family: monospace; }
+        .variable-input-wrapper { display: flex; align-items: center; gap: 8px; background: #333; padding: 2px; border-radius: 4px; border: 1px solid #444; }
+        
+        input[type="color"] { 
+            width: 24px; 
+            height: 24px; 
+            border: none; 
+            padding: 0; 
+            background: none; 
+            cursor: pointer; 
+            border-radius: 2px;
+        }
+        input[type="text"] { 
+            width: 80px; 
+            background: transparent; 
+            border: none; 
+            color: #fff; 
+            font-family: monospace; 
+            font-size: 12px; 
+            outline: none;
+        }
+
+        /* Status Toast */
+        #status-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 370px;
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #status-toast.visible { transform: translateY(0); }
+        #status-toast.success { border-left: 4px solid #44ff44; }
+        #status-toast.error { border-left: 4px solid #ff4444; }
+
+        /* Pi Interface Preview Overrides (Scoped) */
+        .pi-interface { 
+            width: 100%; 
+            max-width: 900px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            /* The border and background come from style.css */
+        }
     </style>
 </head>
 <body>
 
     <div class="preview-pane">
+        <!-- The Pi Interface Structure -->
         <div class="pi-interface">
             <div class="header">
                 π pi-coding-agent v0.5.0
@@ -52,17 +153,35 @@
                     Certainly. I'll check the current directory.
 
                     <div class="tool-block">
-                        <span style="color: var(--toolTitle)">bash</span> 
-                        <span style="color: var(--muted)">ls -la</span>
-                        <br>
-                        <span style="color: var(--toolOutput)">theme.scss<br>build.js</span>
+                        <div class="tool-title" style="color: var(--toolTitle)">bash</div>
+                        <div class="tool-command" style="color: var(--muted)">ls -la</div>
+                        <div class="tool-output" style="color: var(--toolOutput)">
+                            <span style="color: var(--toolDiffAdded)">+ theme.scss</span><br>
+                            <span style="color: var(--toolDiffRemoved)">- old-theme.scss</span><br>
+                            <span style="color: var(--toolDiffContext)">  build.js</span>
+                        </div>
                     </div>
 
                     Here is some markdown:
                     <br><br>
                     <span style="color: var(--mdHeading)"># Theme Update</span>
                     <br>
-                    Using <span style="color: var(--mdCode)">SCSS</span> allows for:
+                    Using <span style="color: var(--mdCode)">SCSS</span> allows for <a href="#" style="color: var(--mdLink)">dynamic variables</a>.
+                    
+                    <div style="border-left: 4px solid var(--mdQuoteBorder); padding-left: 10px; color: var(--mdQuote); margin: 10px 0;">
+                        "Simplicity is the ultimate sophistication."
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--mdHr); margin: 15px 0;">
+
+                    <div style="background: var(--mdCodeBlock); border: 1px solid var(--mdCodeBlockBorder); padding: 10px; font-family: monospace; border-radius: 4px;">
+                        <span style="color: var(--syntaxKeyword)">const</span> <span style="color: var(--syntaxVariable)">theme</span> = <span style="color: var(--syntaxString)">"suckless"</span>;
+                        <br>
+                        <span style="color: var(--syntaxComment)">// Apply theme</span>
+                        <br>
+                        <span style="color: var(--syntaxFunction)">apply</span>(<span style="color: var(--syntaxVariable)">theme</span>);
+                    </div>
+
                     <ul>
                         <li style="color: var(--mdListBullet)">Variables</li>
                         <li style="color: var(--mdListBullet)">Mixins</li>
@@ -73,20 +192,53 @@
             <div class="editor">
                 > User input goes here... <span style="background: var(--accent); color: #000"> </span>
             </div>
+            <div class="footer" style="
+                border-top: 1px solid var(--borderMuted);
+                padding: 10px;
+                font-size: 10px;
+                color: var(--muted);
+                text-align: center;
+            ">
+                brought to you by the suckless-pi project -- making shit coders suck less since 2026
+            </div>
         </div>
     </div>
 
     <div class="editor-pane">
-        <div class="editor-header">
-            Theme Variables
-            <button id="compile-btn" style="float: right; cursor: pointer; background: #00aaff; border: none; color: white; padding: 2px 8px; border-radius: 3px;">Compile</button>
+        <div class="pipeline-header">
+            <div class="pipeline-title">Pi Theme Builder</div>
+            <div class="input-group">
+                <input type="text" id="theme-name" placeholder="my-custom-theme" value="my-custom-theme">
+            </div>
+            <div class="input-group" style="justify-content: space-between;">
+                <button id="compile-btn">Force Compile</button>
+                <button id="save-btn">Save JSON</button>
+            </div>
         </div>
         <div class="editor-content" id="variable-editor">
             <!-- Variables injected here -->
         </div>
     </div>
 
+    <div id="status-toast"></div>
+
     <script>
+        const statusToast = document.getElementById('status-toast');
+
+        function showStatus(msg, type = 'success') {
+            statusToast.textContent = msg;
+            statusToast.className = type + ' visible';
+            setTimeout(() => {
+                statusToast.classList.remove('visible');
+            }, 3000);
+        }
+
+        function refreshCss() {
+            const link = document.querySelector('link[rel="stylesheet"]');
+            const newHref = link.href.split('?')[0] + '?t=' + new Date().getTime();
+            link.href = newHref;
+        }
+
         // Fetch variables and populate editor
         async function loadVariables() {
             try {
@@ -95,53 +247,103 @@
                 const container = document.getElementById('variable-editor');
                 container.innerHTML = '';
 
+                const sections = {
+                    "Core UI": [
+                        "pi-accent", "pi-border", "pi-borderAccent", "pi-borderMuted", "pi-success",
+                        "pi-error", "pi-warning", "pi-muted", "pi-dim", "pi-text", "pi-thinkingText"
+                    ],
+                    "Backgrounds & Content": [
+                        "pi-selectedBg", "pi-userMessageBg", "pi-userMessageText", "pi-customMessageBg",
+                        "pi-customMessageText", "pi-customMessageLabel", "pi-toolPendingBg",
+                        "pi-toolSuccessBg", "pi-toolErrorBg", "pi-toolTitle", "pi-toolOutput"
+                    ],
+                    "Markdown": [
+                        "pi-mdHeading", "pi-mdLink", "pi-mdLinkUrl", "pi-mdCode", "pi-mdCodeBlock",
+                        "pi-mdCodeBlockBorder", "pi-mdQuote", "pi-mdQuoteBorder", "pi-mdHr", "pi-mdListBullet"
+                    ],
+                    "Tool Diffs": [
+                        "pi-toolDiffAdded", "pi-toolDiffRemoved", "pi-toolDiffContext"
+                    ],
+                    "Syntax Highlighting": [
+                        "pi-syntaxComment", "pi-syntaxKeyword", "pi-syntaxFunction", "pi-syntaxVariable",
+                        "pi-syntaxString", "pi-syntaxNumber", "pi-syntaxType", "pi-syntaxOperator",
+                        "pi-syntaxPunctuation"
+                    ],
+                    "Thinking Levels": [
+                        "pi-thinkingOff", "pi-thinkingMinimal", "pi-thinkingLow", "pi-thinkingMedium",
+                        "pi-thinkingHigh", "pi-thinkingXhigh"
+                    ],
+                    "Modes": ["pi-bashMode"]
+                };
+
+                const sectionElements = {};
+                for (const sectionName in sections) {
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'variable-section';
+                    sectionDiv.innerHTML = `<div class="section-title">${sectionName}</div>`;
+                    container.appendChild(sectionDiv);
+                    sectionElements[sectionName] = sectionDiv;
+                }
+
                 for (const [key, value] of Object.entries(variables)) {
-                    const row = document.createElement('div');
-                    row.className = 'variable-row';
-                    
-                    const label = document.createElement('label');
-                    label.className = 'variable-label';
-                    label.textContent = '$' + key;
-                    
-                    const group = document.createElement('div');
-                    group.className = 'variable-input-group';
+                    let assignedToSection = false;
+                    for (const sectionName in sections) {
+                        if (sections[sectionName].includes(key)) {
+                            const row = document.createElement('div');
+                            row.className = 'variable-row';
+                            
+                            const label = document.createElement('span');
+                            label.className = 'variable-label';
+                            label.textContent = '$' + key;
+                            
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'variable-input-wrapper';
 
-                    const textInput = document.createElement('input');
-                    textInput.type = 'text';
-                    textInput.value = value;
-                    textInput.dataset.key = key;
+                            const textInput = document.createElement('input');
+                            textInput.type = 'text';
+                            textInput.value = value;
+                            textInput.dataset.key = key;
 
-                    // Color picker (only if value looks like a color)
-                    if (value.startsWith('#') || value.startsWith('rgb') || value.startsWith('hsl')) {
-                        const colorInput = document.createElement('input');
-                        colorInput.type = 'color';
-                        // Simple hex conversion for picker (picker needs #RRGGBB)
-                        // If it's a complex SCSS function, picker might default to black, which is fine
-                        if (value.startsWith('#') && value.length === 7) {
-                            colorInput.value = value;
+                            const colorInput = document.createElement('input');
+                            colorInput.type = 'color';
+                            
+                            if (value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                                colorInput.value = value;
+                            } else {
+                                colorInput.value = '#000000';
+                            }
+
+                            colorInput.addEventListener('input', (e) => {
+                                textInput.value = e.target.value;
+                                updateVariable(key, e.target.value);
+                            });
+
+                            textInput.addEventListener('change', (e) => {
+                                updateVariable(key, e.target.value);
+                                if (e.target.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                                    colorInput.value = e.target.value;
+                                }
+                            });
+
+                            wrapper.appendChild(colorInput);
+                            wrapper.appendChild(textInput);
+                            row.appendChild(label);
+                            row.appendChild(wrapper);
+                            sectionElements[sectionName].appendChild(row);
+                            assignedToSection = true;
+                            break;
                         }
-                        colorInput.addEventListener('input', (e) => {
-                            textInput.value = e.target.value;
-                            updateVariable(key, e.target.value);
-                        });
-                        group.appendChild(colorInput);
                     }
-
-                    textInput.addEventListener('change', (e) => {
-                        updateVariable(key, e.target.value);
-                    });
-
-                    group.appendChild(textInput);
-                    row.appendChild(label);
-                    row.appendChild(group);
-                    container.appendChild(row);
+                    if (!assignedToSection) {
+                        console.warn(`Variable $${key} not assigned to any section.`);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to load variables', err);
+                showStatus('Failed to connect to builder', 'error');
             }
         }
 
-        // Send update to server
         async function updateVariable(key, value) {
             try {
                 await fetch('/api/variables', {
@@ -149,38 +351,52 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ [key]: value })
                 });
-                // Reload CSS to see changes
-                // The chokidar watcher on server will recompile CSS
-                // We just need to refresh the link tag
-                setTimeout(refreshCss, 500); 
+                // Wait briefly for server to recompile before refreshing
+                // Ideally backend would wait, but chokidar is async
+                setTimeout(refreshCss, 200); 
             } catch (err) {
-                console.error('Failed to update variable', err);
+                showStatus('Failed to update', 'error');
             }
         }
 
-        function refreshCss() {
-            const link = document.querySelector('link[rel="stylesheet"]');
-            link.href = link.href.split('?')[0] + '?t=' + new Date().getTime();
-        }
-
-        // Poll for CSS changes (since we removed the meta refresh)
-        setInterval(refreshCss, 2000);
-
-        loadVariables();
-
+        // Actions
         document.getElementById('compile-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('compile-btn');
-            const originalText = btn.textContent;
-            btn.textContent = '...';
             try {
                 await fetch('/api/compile', { method: 'POST' });
                 refreshCss();
+                showStatus('Compiled successfully');
             } catch (err) {
-                console.error('Failed to compile', err);
-            } finally {
-                btn.textContent = originalText;
+                showStatus('Compilation failed', 'error');
             }
         });
+
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            const name = document.getElementById('theme-name').value;
+            if (!name) {
+                showStatus('Please enter a theme name', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showStatus(`Saved to ${data.path}`);
+                    refreshCss(); // Ensure preview matches saved state
+                } else {
+                    showStatus(data.error || 'Save failed', 'error');
+                }
+            } catch (err) {
+                showStatus('Network error during save', 'error');
+            }
+        });
+
+        // Initialize
+        loadVariables();
     </script>
 
 </body>

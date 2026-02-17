@@ -3,17 +3,15 @@
  *
  * Loads and manages extensions based on .conf configuration files.
  *
+ * Philosophy: Auto-discover extensions, configure only overrides.
+ *
  * Usage:
  *   // In package.json pi.extensions:
  *   "packages/manager/index.ts"  // Load first - handles the rest
- *
- *   // Or programmatically:
- *   import { loadExtensions } from "./packages/manager";
- *   await loadExtensions(pi);
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { join, dirname, relative } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 import {
@@ -40,27 +38,41 @@ function getProjectRoot(): string {
 }
 
 /**
- * Load package.json to get extension list
+ * Recursively discover all .ts/.js files in extensions/
+ * Suckless approach: convention over configuration
  */
-function loadPackageExtensions(rootDir: string): string[] {
-  const pkgPath = join(rootDir, "package.json");
+function discoverExtensions(rootDir: string, dir?: string, results: string[] = []): string[] {
+  const targetDir = dir || join(rootDir, "extensions");
 
-  if (!existsSync(pkgPath)) {
-    console.error("[manager] package.json not found");
-    return [];
+  if (!existsSync(targetDir)) {
+    return results;
   }
 
-  try {
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-    // Try manager.managedExtensions first, fall back to pi.extensions
-    if (pkg.pi?.manager?.managedExtensions) {
-      return pkg.pi.manager.managedExtensions;
+  const entries = readdirSync(targetDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = join(targetDir, entry.name);
+    const relPath = relative(rootDir, fullPath);
+
+    // Skip hidden files, test files, and non-extension files
+    if (entry.name.startsWith('.')) continue;
+    if (entry.name.includes('.test.') || entry.name.includes('.spec.')) continue;
+
+    if (entry.isDirectory()) {
+      // Recurse into subdirectory
+      discoverExtensions(rootDir, fullPath, results);
+    } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.js'))) {
+      // Skip index files at root level of directories (we want entry points)
+      if (entry.name === 'index.ts' || entry.name === 'index.js') {
+        results.push(relPath);
+      } else if (!entry.name.startsWith('_')) {
+        // Non-index files are also valid entry points
+        results.push(relPath);
+      }
     }
-    return pkg.pi?.extensions || [];
-  } catch (e: any) {
-    console.error("[manager] Failed to parse package.json:", e.message);
-    return [];
   }
+
+  return results.sort();
 }
 
 /**
@@ -102,7 +114,7 @@ export async function loadExtensions(
 
   // Log configuration summary
   console.log(
-    `[manager] Extensions: ${config.extensions.enabled.size} enabled, ${config.extensions.disabled.size} disabled`
+    `[manager] Extensions: ${config.extensions.enabled.size} enabled overrides, ${config.extensions.disabled.size} disabled`
   );
   console.log(
     `[manager] Commands: ${config.commands.aliases.size} aliases, ${config.commands.groups.size} groups, ${config.commands.hidden.size} hidden`
@@ -111,15 +123,17 @@ export async function loadExtensions(
   // Create wrapped API with alias support
   const api = createAliasAPI(pi, config.commands.aliases);
 
-  // Get extension list from package.json
-  const extensions = loadPackageExtensions(projectRoot);
+  // Discover extensions from filesystem (suckless: convention over config)
+  const extensions = discoverExtensions(projectRoot);
 
   if (extensions.length === 0) {
-    console.warn("[manager] No extensions found in package.json");
+    console.warn("[manager] No extensions found in extensions/ directory");
     return;
   }
 
-  // Filter and load extensions
+  console.log(`[manager] Discovered ${extensions.length} extensions`);
+
+  // Filter by config (default: all enabled, only disable what's listed)
   const enabledExtensions = extensions
     .filter((ext) => shouldLoadExtension(ext, config.extensions));
 

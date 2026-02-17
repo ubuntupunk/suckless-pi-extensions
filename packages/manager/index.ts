@@ -52,6 +52,10 @@ function loadPackageExtensions(rootDir: string): string[] {
 
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    // Try manager.managedExtensions first, fall back to pi.extensions
+    if (pkg.pi?.manager?.managedExtensions) {
+      return pkg.pi.manager.managedExtensions;
+    }
     return pkg.pi?.extensions || [];
   } catch (e: any) {
     console.error("[manager] Failed to parse package.json:", e.message);
@@ -115,12 +119,11 @@ export async function loadExtensions(
     return;
   }
 
-  // Filter and load extensions (skip manager itself)
+  // Filter and load extensions
   const enabledExtensions = extensions
-    .filter(ext => !ext.includes("packages/manager"))
     .filter((ext) => shouldLoadExtension(ext, config.extensions));
 
-  console.log(`[manager] Loading ${enabledExtensions.length}/${extensions.length - 1} extensions`);
+  console.log(`[manager] Loading ${enabledExtensions.length}/${extensions.length} extensions`);
 
   // Load extensions sequentially to avoid race conditions
   for (const ext of enabledExtensions) {

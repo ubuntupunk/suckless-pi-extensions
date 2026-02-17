@@ -12,13 +12,15 @@ All notable changes to this extension will be documented in this file.
 
 ### Added
 - Add `h`/`l` (or arrow left/right) navigation for collapsing/expanding directories
+- Add `e` key to open files in editor (nvim/vim/vi) from browser or viewer
 - Add git status indicators inline: `M` (modified), `A` (added), `D` (deleted), `?` (untracked)
 - Add agent-modified indicator `*` for files changed by the agent
 - Add loading state display to prevent duplicate load attempts
 
 ### Changed
 - Improve error handling in `handleInput()` to silently catch and log errors
-- Update help text to show all navigation keys: `j/k: nav  h/l: collapse/expand  Enter: open  q: close`
+- Update help text to show all navigation keys: `j/k: nav  h/l: collapse  e: edit  Enter: view  q: close`
+- Update viewer help text: `j/k: scroll  d: diff  e: edit  q: back`
 - Expand ignored directories: `__pycache__`, `.venv`, `venv`
 
 ## [0.1.14] - 2026-02-03

@@ -76,6 +76,14 @@ export function hasCommand(cmd: string): boolean {
   }
 }
 
+export function getEditor(): string | null {
+  // Check in order: nvim, vim, vi
+  if (hasCommand("nvim")) return "nvim";
+  if (hasCommand("vim")) return "vim";
+  if (hasCommand("vi")) return "vi";
+  return null;
+}
+
 export function isUntrackedStatus(status?: string): boolean {
   return status === "?" || status === "??";
 }
@@ -510,6 +518,7 @@ export function createViewer(
   cwd: string,
   theme: Theme,
   _requestComment: (p: CommentPayload, c: string) => void,
+  onClose?: () => void,
 ) {
   const state = {
     file: null as FileNode | null,
@@ -658,7 +667,7 @@ export function createViewer(
         lines.push(
           theme.fg("borderMuted", "─".repeat(width)),
           truncateToWidth(
-            theme.fg("dim", `j/k: scroll  d: diff  q: back`),
+            theme.fg("dim", `j/k: scroll  d: diff  e: edit  q: back`),
             width,
           ),
         );
@@ -695,6 +704,22 @@ export function createViewer(
           state.scroll = 0;
           loadContentSafely(state.lastRenderWidth || 80);
         }
+        // e to open in editor (vim/nvim)
+        if (matchesKey(data, "e")) {
+          const editor = getEditor();
+          if (editor && onClose) {
+            onClose();
+            try {
+              execSync(`${editor} "${state.file!.path}"`, {
+                stdio: "inherit",
+                timeout: 0,
+              });
+            } catch (e: any) {
+              console.error("[files-widget] editor error:", e);
+            }
+          }
+          return;
+        }
         // Allow viewing large files with Enter
         if (matchesKey(data, Key.enter) && state.loadError) {
           // Retry loading
@@ -725,7 +750,7 @@ export function createFileBrowser(
   const gitStatus = repo ? getGitStatus(cwd) : new Map<string, string>();
   const diffStats = repo ? getGitDiffStats(cwd) : new Map<string, DiffStats>();
   const gitBranch = repo ? getGitBranch(cwd) : "";
-  const viewer = createViewer(cwd, theme, requestComment);
+  const viewer = createViewer(cwd, theme, requestComment, onClose);
 
   // Use git file list if available, otherwise scan filesystem
   let root: FileNode;
@@ -805,7 +830,7 @@ export function createFileBrowser(
       lines.push(
         theme.fg("borderMuted", "─".repeat(width)),
         truncateToWidth(
-          theme.fg("dim", "j/k: nav  h/l: collapse/expand  Enter: open  q: close"),
+          theme.fg("dim", "j/k: nav  h/l: collapse  e: edit  Enter: view  q: close"),
           width,
         ),
       );
@@ -862,6 +887,27 @@ export function createFileBrowser(
             state.flatList = flattenTree(state.root as FileNode);
             const foundIdx = state.flatList.findIndex(f => f.node.path === item.node.path);
             state.selectedIndex = foundIdx >= 0 ? foundIdx : 0;
+          }
+          return;
+        }
+        // e to open in editor (vim/nvim)
+        if (matchesKey(data, "e")) {
+          const item = state.flatList[state.selectedIndex];
+          if (item && !item.node.isDirectory) {
+            const editor = getEditor();
+            if (editor) {
+              // Close the UI first
+              onClose();
+              // Spawn editor in background
+              try {
+                execSync(`${editor} "${item.node.path}"`, {
+                  stdio: "inherit",
+                  timeout: 0, // No timeout for editor
+                });
+              } catch (e: any) {
+                console.error("[files-widget] editor error:", e);
+              }
+            }
           }
           return;
         }

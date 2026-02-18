@@ -44,19 +44,22 @@ export function parseExtensionsConf(
   const lines = content.split("\n");
   lines.forEach((line, idx) => {
     const trimmed = line.trim();
-    
+
     // Skip empty lines and comments
     if (!trimmed || trimmed.startsWith("#")) return;
-    
+
     const parts = trimmed.split(/\s+/);
     if (parts.length < 2) {
       console.warn(`[${filePath}:${idx + 1}] Invalid format: ${line}`);
       return;
     }
-    
+
     const [action, ...pathParts] = parts;
-    const path = pathParts.join(" ");
-    
+    let path = pathParts.join(" ");
+
+    // Normalize: strip "extensions/" prefix to match discoverExtensions output
+    path = path.replace(/^extensions\//, '');
+
     if (action === "enable") {
       config.enabled.add(path);
       config.disabled.delete(path); // Remove from disabled if present
@@ -228,16 +231,16 @@ export function shouldLoadExtension(
   extPath: string,
   config: ExtensionConfig
 ): boolean {
-  // Normalize: strip "extensions/" prefix if present
-  const normalizedPath = extPath.replace(/^extensions\//, '');
+  // extPath is already normalized (no "extensions/" prefix) from discoverExtensions
+  // config.disabled/enabled are also normalized by parseExtensionsConf
 
-  // Check both normalized and original paths
-  if (config.disabled.has(extPath) || config.disabled.has(normalizedPath)) {
+  // Explicitly disabled takes precedence
+  if (config.disabled.has(extPath)) {
     return false;
   }
 
   // Explicitly enabled (overrides project defaults)
-  if (config.enabled.has(extPath) || config.enabled.has(normalizedPath)) {
+  if (config.enabled.has(extPath)) {
     return true;
   }
 

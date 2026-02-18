@@ -43,7 +43,11 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
         const trimmed = line.trim();
         if (trimmed.startsWith("disable")) {
           const parts = trimmed.split(/\s+/);
-          if (parts.length >= 2) disabled.add(parts[1]);
+          if (parts.length >= 2) {
+            // Normalize: strip "extensions/" prefix to match Manager
+            const path = parts[1].replace(/^extensions\//, '');
+            disabled.add(path);
+          }
         }
       }
       configPath = projectConfigPath;
@@ -58,10 +62,14 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
         if (trimmed.startsWith("disable")) {
           const parts = trimmed.split(/\s+/);
           if (parts.length >= 2) {
-            disabled.add(parts[1]); // User disable overrides project enable
-          } else if (trimmed.startsWith("enable")) {
-            const parts = trimmed.split(/\s+/);
-            if (parts.length >= 2) disabled.delete(parts[1]); // User enable overrides project disable
+            const path = parts[1].replace(/^extensions\//, '');
+            disabled.add(path); // User disable overrides project enable
+          }
+        } else if (trimmed.startsWith("enable")) {
+          const parts = trimmed.split(/\s+/);
+          if (parts.length >= 2) {
+            const path = parts[1].replace(/^extensions\//, '');
+            disabled.delete(path); // User enable overrides project disable
           }
         }
       }
@@ -133,16 +141,20 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       mkdirSync(userPiDir, { recursive: true });
     }
 
+    // Normalize extension path (ensure it has extensions/ prefix for config file)
+    const configPath = extensionPath.startsWith('extensions/')
+      ? extensionPath
+      : `extensions/${extensionPath}`;
+
     // If enabling, remove from disable list (or create empty config)
     if (enable) {
       if (!existsSync(confPath)) return true; // Nothing to update
 
       const content = readFileSync(confPath, "utf-8");
       const lines = content.split("\n");
-      const normalizedPath = extensionPath.replace(/^extensions\//, "");
       const newLines = lines.filter(line => {
         const trimmed = line.trim();
-        return !(trimmed.startsWith("disable") && trimmed.includes(normalizedPath));
+        return !(trimmed.startsWith("disable") && trimmed.includes(configPath));
       });
       writeFileSync(confPath, newLines.join("\n"), "utf-8");
     } else {
@@ -153,13 +165,13 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
         // Check if already disabled
         if (content.split("\n").some(line => {
           const trimmed = line.trim();
-          return trimmed.startsWith("disable") && trimmed.includes(extensionPath);
+          return trimmed.startsWith("disable") && trimmed.includes(configPath);
         })) {
           return true; // Already disabled
         }
       }
       // Add disable line
-      content = content.trim() + (content ? "\n" : "") + `disable ${extensionPath}\n`;
+      content = content.trim() + (content ? "\n" : "") + `disable ${configPath}\n`;
       writeFileSync(confPath, content, "utf-8");
     }
 

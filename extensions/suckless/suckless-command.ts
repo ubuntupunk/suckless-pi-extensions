@@ -9,8 +9,8 @@
  * - /suckless reload   - Reload all extensions
  */
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { join, dirname } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 
@@ -31,27 +31,42 @@ const EXTENSION_CATEGORIES = {
 const CONFIG_PATH = ".pi/extensions.conf";
 
 /**
+ * Get the project root directory (where .pi/ and extensions/ live)
+ */
+function getProjectRoot(): string {
+  // Start from current file location: extensions/suckless/suckless-command.ts
+  const currentDir = dirname(import.meta.dirname || __dirname);
+  // Go up to extensions/suckless/
+  const extensionsDir = dirname(currentDir);
+  // Go up to project root
+  return dirname(extensionsDir);
+}
+
+/**
  * Parse extensions.conf to get enabled/disabled lists
  */
 function parseExtensionsConf(rootDir: string): { enabled: string[]; disabled: string[] } {
   const confPath = join(rootDir, CONFIG_PATH);
   const disabled: string[] = [];
-  
-  if (existsSync(confPath)) {
-    const content = readFileSync(confPath, "utf-8");
-    const lines = content.split("\n");
-    
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("disable")) {
-        const parts = trimmed.split(/\s+/);
-        if (parts.length >= 2) {
-          disabled.push(parts[1]);
-        }
+
+  if (!existsSync(confPath)) {
+    console.warn(`[suckless] Config not found: ${confPath}`);
+    return { enabled: [], disabled: [] };
+  }
+
+  const content = readFileSync(confPath, "utf-8");
+  const lines = content.split("\n");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("disable")) {
+      const parts = trimmed.split(/\s+/);
+      if (parts.length >= 2) {
+        disabled.push(parts[1]);
       }
     }
   }
-  
+
   return { enabled: [], disabled };
 }
 
@@ -61,23 +76,30 @@ function parseExtensionsConf(rootDir: string): { enabled: string[]; disabled: st
 function discoverExtensions(rootDir: string): ExtensionInfo[] {
   const extensions: ExtensionInfo[] = [];
   const extDir = join(rootDir, "extensions");
-  
+
+  console.log(`[suckless] Scanning: ${extDir}`);
+
   if (!existsSync(extDir)) {
+    console.warn(`[suckless] Extensions dir not found: ${extDir}`);
     return extensions;
   }
-  
+
   // Read categories (functional, utility, suckless)
   const categories = ["functional", "utility", "suckless"];
-  
+
   for (const category of categories) {
     const categoryDir = join(extDir, category);
-    if (!existsSync(categoryDir)) continue;
-    
-    const entries = require("node:fs").readdirSync(categoryDir, { withFileTypes: true });
-    
+    if (!existsSync(categoryDir)) {
+      console.warn(`[suckless] Category dir not found: ${categoryDir}`);
+      continue;
+    }
+
+    const entries = readdirSync(categoryDir, { withFileTypes: true });
+    console.log(`[suckless] ${category}: ${entries.length} entries`);
+
     for (const entry of entries) {
       if (entry.name.startsWith(".")) continue;
-      
+
       if (entry.isDirectory()) {
         const indexPath = join(categoryDir, entry.name, "index.ts");
         if (existsSync(indexPath)) {
@@ -101,7 +123,8 @@ function discoverExtensions(rootDir: string): ExtensionInfo[] {
       }
     }
   }
-  
+
+  console.log(`[suckless] Found ${extensions.length} extensions`);
   return extensions.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -143,35 +166,36 @@ function updateExtensionsConf(rootDir: string, extensionPath: string, enable: bo
 }
 
 export default function sucklessCommandExtension(pi: ExtensionAPI) {
-  const cwd = process.cwd();
-  
+  const projectRoot = getProjectRoot();
+  console.log(`[suckless] Project root: ${projectRoot}`);
+
   // /suckless command
   pi.registerCommand("suckless", {
     description: "Manage suckless extensions",
     handler: async (args, ctx) => {
       const subcommand = args.trim().split(/\s+/)[0] || "status";
       const extensionName = args.trim().split(/\s+/)[1];
-      
+
       switch (subcommand) {
         case "status":
-          await showStatus(ctx);
+          await showStatus(projectRoot, ctx);
           break;
         case "list":
-          await listExtensions(ctx);
+          await listExtensions(projectRoot, ctx);
           break;
         case "enable":
           if (!extensionName) {
             ctx.ui.notify("Usage: /suckless enable <extension-name>", "error");
             return;
           }
-          await toggleExtension(extensionName, true, ctx);
+          await toggleExtension(projectRoot, extensionName, true, ctx);
           break;
         case "disable":
           if (!extensionName) {
             ctx.ui.notify("Usage: /suckless disable <extension-name>", "error");
             return;
           }
-          await toggleExtension(extensionName, false, ctx);
+          await toggleExtension(projectRoot, extensionName, false, ctx);
           break;
         case "reload":
           await reloadExtensions(ctx);
@@ -184,16 +208,16 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       }
     },
   });
-  
-  async function showStatus(ctx: any) {
-    const config = parseExtensionsConf(cwd);
-    const allExtensions = discoverExtensions(cwd);
-    
+
+  async function showStatus(rootDir: string, ctx: any) {
+    const config = parseExtensionsConf(rootDir);
+    const allExtensions = discoverExtensions(rootDir);
+
     const enabledCount = allExtensions.filter(
       ext => !config.disabled.some(d => d.includes(ext.path))
     ).length;
     const disabledCount = config.disabled.length;
-    
+
     const lines = [
       "━━━ Suckless Extensions Status ━━━",
       ``,
@@ -201,47 +225,47 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       ``,
       `Config: ${CONFIG_PATH}`,
     ];
-    
+
     if (config.disabled.length > 0) {
       lines.push(``, `Disabled:`);
       for (const disabled of config.disabled) {
         lines.push(`  • ${disabled}`);
       }
     }
-    
+
     ctx.ui.notify(lines.join("\n"), "info");
   }
-  
-  async function listExtensions(ctx: any) {
-    const config = parseExtensionsConf(cwd);
-    const allExtensions = discoverExtensions(cwd);
-    
+
+  async function listExtensions(rootDir: string, ctx: any) {
+    const config = parseExtensionsConf(rootDir);
+    const allExtensions = discoverExtensions(rootDir);
+
     const lines = ["━━━ Available Extensions ━━━", ``];
-    
+
     for (const ext of allExtensions) {
       const isDisabled = config.disabled.some(d => d.includes(ext.path));
       const status = isDisabled ? "○" : "●";
       const statusColor = isDisabled ? "dim" : "success";
-      
+
       lines.push(
         `  ${ctx.ui.theme.fg(statusColor, status)} ${ext.name.padEnd(25)} [${ext.category}]`
       );
     }
-    
+
     ctx.ui.notify(lines.join("\n"), "info");
   }
-  
-  async function toggleExtension(name: string, enable: boolean, ctx: any) {
-    const allExtensions = discoverExtensions(cwd);
+
+  async function toggleExtension(rootDir: string, name: string, enable: boolean, ctx: any) {
+    const allExtensions = discoverExtensions(rootDir);
     const extension = allExtensions.find(ext => ext.name === name);
-    
+
     if (!extension) {
       ctx.ui.notify(`Extension '${name}' not found`, "error");
       return;
     }
-    
-    const success = updateExtensionsConf(cwd, extension.path, enable);
-    
+
+    const success = updateExtensionsConf(rootDir, extension.path, enable);
+
     if (success) {
       ctx.ui.notify(
         `Extension '${name}' ${enable ? "enabled" : "disabled"}. Run /suckless reload to apply.`,
@@ -251,7 +275,7 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       ctx.ui.notify("Failed to update configuration", "error");
     }
   }
-  
+
   async function reloadExtensions(ctx: any) {
     ctx.ui.notify("Extension reload not available - restart Pi to reload extensions", "warning");
   }

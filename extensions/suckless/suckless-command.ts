@@ -230,7 +230,10 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
 
         const success = updateExtensionsConf(projectRoot, extension.path, subcommand === "enable");
         if (success) {
-          ctx.ui.notify(`Extension '${extensionName}' ${subcommand}d. Restart Pi to apply.`, "success");
+          ctx.ui.notify(
+            `Extension '${extensionName}' ${subcommand}d.\n\n⚠️ Restart Pi to apply changes.`,
+            "success"
+          );
         } else {
           ctx.ui.notify("Failed to update configuration", "error");
         }

@@ -26,17 +26,36 @@ const EXTENSION_CATEGORIES = {
 export default function sucklessCommandExtension(pi: ExtensionAPI) {
   console.log('[suckless-command] Extension loading...');
 
-  // Helper: Parse extensions.conf
-  function parseExtensionsConf(rootDir: string): { disabled: string[] } {
-    const confPath = join(rootDir, CONFIG_PATH);
-    const disabled: string[] = [];
-    
-    if (!existsSync(confPath)) {
-      console.warn('[suckless] Config not found:', confPath);
-      return { disabled: [] };
+  // Helper: Parse extensions.conf (user config first, then project config)
+  function parseExtensionsConf(projectRoot: string): { disabled: string[], configPath: string } {
+    // Check user config first (~/.pi/extensions.conf)
+    const userConfigPath = join(process.env.HOME || process.env.USERPROFILE || '', '.pi', CONFIG_PATH);
+
+    if (existsSync(userConfigPath)) {
+      console.log('[suckless] Using user config:', userConfigPath);
+      const disabled: string[] = [];
+      const content = readFileSync(userConfigPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("disable")) {
+          const parts = trimmed.split(/\s+/);
+          if (parts.length >= 2) disabled.push(parts[1]);
+        }
+      }
+      return { disabled, configPath: userConfigPath };
     }
-    
-    const content = readFileSync(confPath, "utf-8");
+
+    // Fall back to project config
+    const projectConfigPath = join(projectRoot, CONFIG_PATH);
+    console.log('[suckless] Using project config:', projectConfigPath);
+
+    if (!existsSync(projectConfigPath)) {
+      console.warn('[suckless] Config not found:', projectConfigPath);
+      return { disabled: [], configPath: projectConfigPath };
+    }
+
+    const disabled: string[] = [];
+    const content = readFileSync(projectConfigPath, "utf-8");
     for (const line of content.split("\n")) {
       const trimmed = line.trim();
       if (trimmed.startsWith("disable")) {
@@ -44,8 +63,8 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
         if (parts.length >= 2) disabled.push(parts[1]);
       }
     }
-    
-    return { disabled };
+
+    return { disabled, configPath: projectConfigPath };
   }
 
   // Helper: Discover extensions
@@ -95,15 +114,16 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
     return extensions.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  // Helper: Update config
-  function updateExtensionsConf(rootDir: string, extensionPath: string, enable: boolean): boolean {
-    const confPath = join(rootDir, CONFIG_PATH);
+  // Helper: Update config (writes to project config, user config is manual only)
+  function updateExtensionsConf(projectRoot: string, extensionPath: string, enable: boolean): boolean {
+    // Always write to project config (~/.pi is for manual user overrides only)
+    const confPath = join(projectRoot, CONFIG_PATH);
     if (!existsSync(confPath)) return false;
-    
+
     const content = readFileSync(confPath, "utf-8");
     const lines = content.split("\n");
     const normalizedPath = extensionPath.replace(/^extensions\//, "");
-    
+
     if (enable) {
       const newLines = lines.filter(line => {
         const trimmed = line.trim();
@@ -120,7 +140,7 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
         writeFileSync(confPath, lines.join("\n"), "utf-8");
       }
     }
-    
+
     return true;
   }
 
@@ -161,37 +181,37 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       ctx.ui.notify(`[suckless] Running ${subcommand}...`, "info");
       
       if (subcommand === "status") {
-        const config = parseExtensionsConf(projectRoot);
+        const { disabled, configPath } = parseExtensionsConf(projectRoot);
         const allExtensions = discoverExtensions(projectRoot);
-        const enabledCount = allExtensions.filter(ext => !config.disabled.some(d => d.includes(ext.path))).length;
-        
+        const enabledCount = allExtensions.filter(ext => !disabled.some(d => d.includes(ext.path))).length;
+
         const lines = [
           "━━━ Suckless Extensions Status ━━━",
           ``,
-          `Loaded: ${enabledCount} enabled, ${config.disabled.length} disabled`,
+          `Loaded: ${enabledCount} enabled, ${disabled.length} disabled`,
           ``,
-          `Config: ${CONFIG_PATH}`,
+          `Config: ${configPath}`,
         ];
-        
-        if (config.disabled.length > 0) {
+
+        if (disabled.length > 0) {
           lines.push(``, `Disabled:`);
-          for (const d of config.disabled) lines.push(`  • ${d}`);
+          for (const d of disabled) lines.push(`  • ${d}`);
         }
-        
+
         ctx.ui.notify(lines.join("\n"), "info");
       }
       else if (subcommand === "list") {
-        const config = parseExtensionsConf(projectRoot);
+        const { disabled, configPath } = parseExtensionsConf(projectRoot);
         const allExtensions = discoverExtensions(projectRoot);
-        
+
         const lines = ["━━━ Available Extensions ━━━", ``];
         for (const ext of allExtensions) {
-          const isDisabled = config.disabled.some(d => d.includes(ext.path));
+          const isDisabled = disabled.some(d => d.includes(ext.path));
           const status = isDisabled ? "○" : "●";
           const color = isDisabled ? "dim" : "success";
           lines.push(`  ${ctx.ui.theme.fg(color, status)} ${ext.name.padEnd(25)} [${ext.category}]`);
         }
-        
+
         ctx.ui.notify(lines.join("\n"), "info");
       }
       else if (subcommand === "enable" || subcommand === "disable") {
@@ -199,15 +219,15 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
           ctx.ui.notify(`Usage: /suckless ${subcommand} <extension-name>`, "error");
           return;
         }
-        
+
         const allExtensions = discoverExtensions(projectRoot);
         const extension = allExtensions.find(ext => ext.name === extensionName);
-        
+
         if (!extension) {
           ctx.ui.notify(`Extension '${extensionName}' not found`, "error");
           return;
         }
-        
+
         const success = updateExtensionsConf(projectRoot, extension.path, subcommand === "enable");
         if (success) {
           ctx.ui.notify(`Extension '${extensionName}' ${subcommand}d. Restart Pi to apply.`, "success");

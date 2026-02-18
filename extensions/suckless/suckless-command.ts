@@ -130,11 +130,34 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       console.log('[suckless-command] Handler called');
       console.log('[suckless-command] ctx.cwd:', ctx.cwd);
-      
-      const projectRoot = ctx.cwd || process.cwd();
+
+      // Find the suckless-pi-extensions directory
+      // ctx.cwd might be the parent project, so we need to find our repo
+      let projectRoot = ctx.cwd;
+
+      // If we're in suckless-project, look for suckless-pi-extensions subdirectory
+      if (ctx.cwd.endsWith('suckless-project')) {
+        const candidate = join(ctx.cwd, 'suckless-pi-extensions');
+        if (existsSync(candidate)) {
+          projectRoot = candidate;
+          console.log('[suckless-command] Found extensions repo:', projectRoot);
+        }
+      }
+
+      // Also check if .pi/extensions.conf exists, if not try parent directories
+      if (!existsSync(join(projectRoot, CONFIG_PATH))) {
+        const parent = join(projectRoot, '..');
+        if (existsSync(join(parent, CONFIG_PATH))) {
+          projectRoot = parent;
+          console.log('[suckless-command] Using parent:', projectRoot);
+        }
+      }
+
+      console.log('[suckless-command] Using projectRoot:', projectRoot);
+
       const subcommand = args.trim().split(/\s+/)[0] || "status";
       const extensionName = args.trim().split(/\s+/)[1];
-      
+
       ctx.ui.notify(`[suckless] Running ${subcommand}...`, "info");
       
       if (subcommand === "status") {

@@ -1,25 +1,20 @@
 /**
  * Suckless Extension Manager Command
  *
- * Provides `/suckless` command for managing suckless extensions:
- * - /suckless status   - Show loaded extensions, config status
- * - /suckless list     - List all available extensions
- * - /suckless enable   - Enable an extension
- * - /suckless disable  - Disable an extension
- * - /suckless reload   - Reload all extensions
+ * Provides `/suckless` command for managing suckless extensions.
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+
+const CONFIG_PATH = ".pi/extensions.conf";
 
 interface ExtensionInfo {
   path: string;
   name: string;
   category: string;
   enabled: boolean;
-  description: string;
 }
 
 const EXTENSION_CATEGORIES = {
@@ -28,251 +23,183 @@ const EXTENSION_CATEGORIES = {
   suckless: "Suckless",
 };
 
-const CONFIG_PATH = ".pi/extensions.conf";
+export default function sucklessCommandExtension(pi: ExtensionAPI) {
+  console.log('[suckless-command] Extension loading...');
 
-/**
- * Get the project root directory from ExtensionAPI context
- */
-function getProjectRoot(ctx: any): string {
-  // Use the cwd from the extension context, which should be the project root
-  return ctx.cwd || process.cwd();
-}
-
-/**
- * Parse extensions.conf to get enabled/disabled lists
- */
-function parseExtensionsConf(rootDir: string): { enabled: string[]; disabled: string[] } {
-  const confPath = join(rootDir, CONFIG_PATH);
-  const disabled: string[] = [];
-
-  if (!existsSync(confPath)) {
-    console.warn(`[suckless] Config not found: ${confPath}`);
-    return { enabled: [], disabled: [] };
-  }
-
-  const content = readFileSync(confPath, "utf-8");
-  const lines = content.split("\n");
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("disable")) {
-      const parts = trimmed.split(/\s+/);
-      if (parts.length >= 2) {
-        disabled.push(parts[1]);
+  // Helper: Parse extensions.conf
+  function parseExtensionsConf(rootDir: string): { disabled: string[] } {
+    const confPath = join(rootDir, CONFIG_PATH);
+    const disabled: string[] = [];
+    
+    if (!existsSync(confPath)) {
+      console.warn('[suckless] Config not found:', confPath);
+      return { disabled: [] };
+    }
+    
+    const content = readFileSync(confPath, "utf-8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("disable")) {
+        const parts = trimmed.split(/\s+/);
+        if (parts.length >= 2) disabled.push(parts[1]);
       }
     }
+    
+    return { disabled };
   }
 
-  return { enabled: [], disabled };
-}
-
-/**
- * Discover all extensions in the extensions/ directory
- */
-function discoverExtensions(rootDir: string): ExtensionInfo[] {
-  const extensions: ExtensionInfo[] = [];
-  const extDir = join(rootDir, "extensions");
-
-  console.log(`[suckless] Scanning: ${extDir}`);
-
-  if (!existsSync(extDir)) {
-    console.warn(`[suckless] Extensions dir not found: ${extDir}`);
-    return extensions;
-  }
-
-  // Read categories (functional, utility, suckless)
-  const categories = ["functional", "utility", "suckless"];
-
-  for (const category of categories) {
-    const categoryDir = join(extDir, category);
-    if (!existsSync(categoryDir)) {
-      console.warn(`[suckless] Category dir not found: ${categoryDir}`);
-      continue;
+  // Helper: Discover extensions
+  function discoverExtensions(rootDir: string): ExtensionInfo[] {
+    const extensions: ExtensionInfo[] = [];
+    const extDir = join(rootDir, "extensions");
+    
+    console.log('[suckless] Scanning:', extDir);
+    
+    if (!existsSync(extDir)) {
+      console.warn('[suckless] Extensions dir not found:', extDir);
+      return extensions;
     }
-
-    const entries = readdirSync(categoryDir, { withFileTypes: true });
-    console.log(`[suckless] ${category}: ${entries.length} entries`);
-
-    for (const entry of entries) {
-      if (entry.name.startsWith(".")) continue;
-
-      if (entry.isDirectory()) {
-        const indexPath = join(categoryDir, entry.name, "index.ts");
-        if (existsSync(indexPath)) {
+    
+    for (const category of ["functional", "utility", "suckless"]) {
+      const categoryDir = join(extDir, category);
+      if (!existsSync(categoryDir)) continue;
+      
+      const entries = readdirSync(categoryDir, { withFileTypes: true });
+      console.log(`[suckless] ${category}: ${entries.length} entries`);
+      
+      for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue;
+        
+        if (entry.isDirectory()) {
+          const indexPath = join(categoryDir, entry.name, "index.ts");
+          if (existsSync(indexPath)) {
+            extensions.push({
+              path: `extensions/${category}/${entry.name}/index.ts`,
+              name: entry.name,
+              category: EXTENSION_CATEGORIES[category as keyof typeof EXTENSION_CATEGORIES] || category,
+              enabled: true,
+            });
+          }
+        } else if (entry.name.endsWith(".ts") && !entry.name.startsWith("_")) {
           extensions.push({
-            path: `extensions/${category}/${entry.name}/index.ts`,
-            name: entry.name,
+            path: `extensions/${category}/${entry.name}`,
+            name: entry.name.replace(".ts", ""),
             category: EXTENSION_CATEGORIES[category as keyof typeof EXTENSION_CATEGORIES] || category,
-            enabled: true, // Will be filtered by config
-            description: `${category} extension`,
+            enabled: true,
           });
         }
-      } else if (entry.name.endsWith(".ts") && !entry.name.startsWith("_")) {
-        const name = entry.name.replace(".ts", "");
-        extensions.push({
-          path: `extensions/${category}/${entry.name}`,
-          name: name,
-          category: EXTENSION_CATEGORIES[category as keyof typeof EXTENSION_CATEGORIES] || category,
-          enabled: true,
-          description: `${category} extension`,
-        });
       }
     }
-  }
-
-  console.log(`[suckless] Found ${extensions.length} extensions`);
-  return extensions.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/**
- * Update extensions.conf to enable or disable an extension
- */
-function updateExtensionsConf(rootDir: string, extensionPath: string, enable: boolean): boolean {
-  const confPath = join(rootDir, CONFIG_PATH);
-  
-  if (!existsSync(confPath)) {
-    return false;
-  }
-  
-  const content = readFileSync(confPath, "utf-8");
-  const lines = content.split("\n");
-  const normalizedPath = extensionPath.replace(/^extensions\//, "");
-  
-  if (enable) {
-    // Remove disable line if present
-    const newLines = lines.filter(line => {
-      const trimmed = line.trim();
-      return !(trimmed.startsWith("disable") && trimmed.includes(normalizedPath));
-    });
-    writeFileSync(confPath, newLines.join("\n"), "utf-8");
-  } else {
-    // Add disable line if not present
-    const hasDisable = lines.some(line => {
-      const trimmed = line.trim();
-      return trimmed.startsWith("disable") && trimmed.includes(normalizedPath);
-    });
     
-    if (!hasDisable) {
-      lines.push(`disable ${extensionPath}`);
-      writeFileSync(confPath, lines.join("\n"), "utf-8");
-    }
+    console.log('[suckless] Found:', extensions.length, 'extensions');
+    return extensions.sort((a, b) => a.name.localeCompare(b.name));
   }
-  
-  return true;
-}
 
-export default function sucklessCommandExtension(pi: ExtensionAPI) {
-  // /suckless command
+  // Helper: Update config
+  function updateExtensionsConf(rootDir: string, extensionPath: string, enable: boolean): boolean {
+    const confPath = join(rootDir, CONFIG_PATH);
+    if (!existsSync(confPath)) return false;
+    
+    const content = readFileSync(confPath, "utf-8");
+    const lines = content.split("\n");
+    const normalizedPath = extensionPath.replace(/^extensions\//, "");
+    
+    if (enable) {
+      const newLines = lines.filter(line => {
+        const trimmed = line.trim();
+        return !(trimmed.startsWith("disable") && trimmed.includes(normalizedPath));
+      });
+      writeFileSync(confPath, newLines.join("\n"), "utf-8");
+    } else {
+      const hasDisable = lines.some(line => {
+        const trimmed = line.trim();
+        return trimmed.startsWith("disable") && trimmed.includes(normalizedPath);
+      });
+      if (!hasDisable) {
+        lines.push(`disable ${extensionPath}`);
+        writeFileSync(confPath, lines.join("\n"), "utf-8");
+      }
+    }
+    
+    return true;
+  }
+
+  // Register /suckless command
   pi.registerCommand("suckless", {
     description: "Manage suckless extensions",
     handler: async (args, ctx) => {
-      const projectRoot = getProjectRoot(ctx);
-      console.log(`[suckless] Project root: ${projectRoot}`);
-
+      console.log('[suckless-command] Handler called');
+      console.log('[suckless-command] ctx.cwd:', ctx.cwd);
+      
+      const projectRoot = ctx.cwd || process.cwd();
       const subcommand = args.trim().split(/\s+/)[0] || "status";
       const extensionName = args.trim().split(/\s+/)[1];
-
-      switch (subcommand) {
-        case "status":
-          await showStatus(projectRoot, ctx);
-          break;
-        case "list":
-          await listExtensions(projectRoot, ctx);
-          break;
-        case "enable":
-          if (!extensionName) {
-            ctx.ui.notify("Usage: /suckless enable <extension-name>", "error");
-            return;
-          }
-          await toggleExtension(projectRoot, extensionName, true, ctx);
-          break;
-        case "disable":
-          if (!extensionName) {
-            ctx.ui.notify("Usage: /suckless disable <extension-name>", "error");
-            return;
-          }
-          await toggleExtension(projectRoot, extensionName, false, ctx);
-          break;
-        case "reload":
-          await reloadExtensions(ctx);
-          break;
-        default:
-          ctx.ui.notify(
-            "Usage: /suckless <status|list|enable|disable|reload> [extension-name]",
-            "warning"
-          );
+      
+      ctx.ui.notify(`[suckless] Running ${subcommand}...`, "info");
+      
+      if (subcommand === "status") {
+        const config = parseExtensionsConf(projectRoot);
+        const allExtensions = discoverExtensions(projectRoot);
+        const enabledCount = allExtensions.filter(ext => !config.disabled.some(d => d.includes(ext.path))).length;
+        
+        const lines = [
+          "━━━ Suckless Extensions Status ━━━",
+          ``,
+          `Loaded: ${enabledCount} enabled, ${config.disabled.length} disabled`,
+          ``,
+          `Config: ${CONFIG_PATH}`,
+        ];
+        
+        if (config.disabled.length > 0) {
+          lines.push(``, `Disabled:`);
+          for (const d of config.disabled) lines.push(`  • ${d}`);
+        }
+        
+        ctx.ui.notify(lines.join("\n"), "info");
+      }
+      else if (subcommand === "list") {
+        const config = parseExtensionsConf(projectRoot);
+        const allExtensions = discoverExtensions(projectRoot);
+        
+        const lines = ["━━━ Available Extensions ━━━", ``];
+        for (const ext of allExtensions) {
+          const isDisabled = config.disabled.some(d => d.includes(ext.path));
+          const status = isDisabled ? "○" : "●";
+          const color = isDisabled ? "dim" : "success";
+          lines.push(`  ${ctx.ui.theme.fg(color, status)} ${ext.name.padEnd(25)} [${ext.category}]`);
+        }
+        
+        ctx.ui.notify(lines.join("\n"), "info");
+      }
+      else if (subcommand === "enable" || subcommand === "disable") {
+        if (!extensionName) {
+          ctx.ui.notify(`Usage: /suckless ${subcommand} <extension-name>`, "error");
+          return;
+        }
+        
+        const allExtensions = discoverExtensions(projectRoot);
+        const extension = allExtensions.find(ext => ext.name === extensionName);
+        
+        if (!extension) {
+          ctx.ui.notify(`Extension '${extensionName}' not found`, "error");
+          return;
+        }
+        
+        const success = updateExtensionsConf(projectRoot, extension.path, subcommand === "enable");
+        if (success) {
+          ctx.ui.notify(`Extension '${extensionName}' ${subcommand}d. Restart Pi to apply.`, "success");
+        } else {
+          ctx.ui.notify("Failed to update configuration", "error");
+        }
+      }
+      else if (subcommand === "reload") {
+        ctx.ui.notify("Extension reload not available - restart Pi to reload extensions", "warning");
+      }
+      else {
+        ctx.ui.notify("Usage: /suckless <status|list|enable|disable|reload> [name]", "warning");
       }
     },
   });
 
-  async function showStatus(rootDir: string, ctx: any) {
-    const config = parseExtensionsConf(rootDir);
-    const allExtensions = discoverExtensions(rootDir);
-
-    const enabledCount = allExtensions.filter(
-      ext => !config.disabled.some(d => d.includes(ext.path))
-    ).length;
-    const disabledCount = config.disabled.length;
-
-    const lines = [
-      "━━━ Suckless Extensions Status ━━━",
-      ``,
-      `Loaded: ${enabledCount} enabled, ${disabledCount} disabled`,
-      ``,
-      `Config: ${CONFIG_PATH}`,
-    ];
-
-    if (config.disabled.length > 0) {
-      lines.push(``, `Disabled:`);
-      for (const disabled of config.disabled) {
-        lines.push(`  • ${disabled}`);
-      }
-    }
-
-    ctx.ui.notify(lines.join("\n"), "info");
-  }
-
-  async function listExtensions(rootDir: string, ctx: any) {
-    const config = parseExtensionsConf(rootDir);
-    const allExtensions = discoverExtensions(rootDir);
-
-    const lines = ["━━━ Available Extensions ━━━", ``];
-
-    for (const ext of allExtensions) {
-      const isDisabled = config.disabled.some(d => d.includes(ext.path));
-      const status = isDisabled ? "○" : "●";
-      const statusColor = isDisabled ? "dim" : "success";
-
-      lines.push(
-        `  ${ctx.ui.theme.fg(statusColor, status)} ${ext.name.padEnd(25)} [${ext.category}]`
-      );
-    }
-
-    ctx.ui.notify(lines.join("\n"), "info");
-  }
-
-  async function toggleExtension(rootDir: string, name: string, enable: boolean, ctx: any) {
-    const allExtensions = discoverExtensions(rootDir);
-    const extension = allExtensions.find(ext => ext.name === name);
-
-    if (!extension) {
-      ctx.ui.notify(`Extension '${name}' not found`, "error");
-      return;
-    }
-
-    const success = updateExtensionsConf(rootDir, extension.path, enable);
-
-    if (success) {
-      ctx.ui.notify(
-        `Extension '${name}' ${enable ? "enabled" : "disabled"}. Run /suckless reload to apply.`,
-        "success"
-      );
-    } else {
-      ctx.ui.notify("Failed to update configuration", "error");
-    }
-  }
-
-  async function reloadExtensions(ctx: any) {
-    ctx.ui.notify("Extension reload not available - restart Pi to reload extensions", "warning");
-  }
+  console.log('[suckless-command] Command registered');
 }

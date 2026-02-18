@@ -26,45 +26,51 @@ const EXTENSION_CATEGORIES = {
 export default function sucklessCommandExtension(pi: ExtensionAPI) {
   console.log('[suckless-command] Extension loading...');
 
-  // Helper: Parse extensions.conf (user config first, then project config)
+  // Helper: Parse extensions.conf (MERGES user + project like Manager does)
   function parseExtensionsConf(projectRoot: string): { disabled: string[], configPath: string } {
-    // Check user config first (~/.pi/extensions.conf)
-    const userConfigPath = join(process.env.HOME || process.env.USERPROFILE || '', '.pi', CONFIG_PATH);
+    const homedir = require("node:os").homedir();
+    const userConfigPath = join(homedir, '.pi', CONFIG_PATH);
+    const projectConfigPath = join(projectRoot, CONFIG_PATH);
 
+    const disabled = new Set<string>();
+    let configPath = projectConfigPath;
+
+    // 1. Load project config first (defaults)
+    if (existsSync(projectConfigPath)) {
+      console.log('[suckless] Loading project config:', projectConfigPath);
+      const content = readFileSync(projectConfigPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("disable")) {
+          const parts = trimmed.split(/\s+/);
+          if (parts.length >= 2) disabled.add(parts[1]);
+        }
+      }
+      configPath = projectConfigPath;
+    }
+
+    // 2. Load user config (overrides project)
     if (existsSync(userConfigPath)) {
-      console.log('[suckless] Using user config:', userConfigPath);
-      const disabled: string[] = [];
+      console.log('[suckless] Loading user config:', userConfigPath);
       const content = readFileSync(userConfigPath, "utf-8");
       for (const line of content.split("\n")) {
         const trimmed = line.trim();
         if (trimmed.startsWith("disable")) {
           const parts = trimmed.split(/\s+/);
-          if (parts.length >= 2) disabled.push(parts[1]);
+          if (parts.length >= 2) {
+            disabled.add(parts[1]); // User disable overrides project enable
+          } else if (trimmed.startsWith("enable")) {
+            const parts = trimmed.split(/\s+/);
+            if (parts.length >= 2) disabled.delete(parts[1]); // User enable overrides project disable
+          }
         }
       }
-      return { disabled, configPath: userConfigPath };
+      configPath = userConfigPath + " (overrides project)";
+    } else {
+      console.log('[suckless] No user config found (~/.pi/extensions.conf)');
     }
 
-    // Fall back to project config
-    const projectConfigPath = join(projectRoot, CONFIG_PATH);
-    console.log('[suckless] Using project config:', projectConfigPath);
-
-    if (!existsSync(projectConfigPath)) {
-      console.warn('[suckless] Config not found:', projectConfigPath);
-      return { disabled: [], configPath: projectConfigPath };
-    }
-
-    const disabled: string[] = [];
-    const content = readFileSync(projectConfigPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("disable")) {
-        const parts = trimmed.split(/\s+/);
-        if (parts.length >= 2) disabled.push(parts[1]);
-      }
-    }
-
-    return { disabled, configPath: projectConfigPath };
+    return { disabled: Array.from(disabled), configPath };
   }
 
   // Helper: Discover extensions
@@ -114,31 +120,47 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
     return extensions.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  // Helper: Update config (writes to project config, user config is manual only)
-  function updateExtensionsConf(projectRoot: string, extensionPath: string, enable: boolean): boolean {
-    // Always write to project config (~/.pi is for manual user overrides only)
-    const confPath = join(projectRoot, CONFIG_PATH);
-    if (!existsSync(confPath)) return false;
+  // Helper: Update config (writes to USER config ~/.pi/extensions.conf)
+  function updateExtensionsConf(_projectRoot: string, extensionPath: string, enable: boolean): boolean {
+    // Always write to user config (~/.pi/extensions.conf) for user preferences
+    const homedir = require("node:os").homedir();
+    const userPiDir = join(homedir, ".pi");
+    const confPath = join(userPiDir, CONFIG_PATH);
 
-    const content = readFileSync(confPath, "utf-8");
-    const lines = content.split("\n");
-    const normalizedPath = extensionPath.replace(/^extensions\//, "");
+    // Create ~/.pi directory if it doesn't exist
+    const { mkdirSync } = require("node:fs");
+    if (!existsSync(userPiDir)) {
+      mkdirSync(userPiDir, { recursive: true });
+    }
 
+    // If enabling, remove from disable list (or create empty config)
     if (enable) {
+      if (!existsSync(confPath)) return true; // Nothing to update
+
+      const content = readFileSync(confPath, "utf-8");
+      const lines = content.split("\n");
+      const normalizedPath = extensionPath.replace(/^extensions\//, "");
       const newLines = lines.filter(line => {
         const trimmed = line.trim();
         return !(trimmed.startsWith("disable") && trimmed.includes(normalizedPath));
       });
       writeFileSync(confPath, newLines.join("\n"), "utf-8");
     } else {
-      const hasDisable = lines.some(line => {
-        const trimmed = line.trim();
-        return trimmed.startsWith("disable") && trimmed.includes(normalizedPath);
-      });
-      if (!hasDisable) {
-        lines.push(`disable ${extensionPath}`);
-        writeFileSync(confPath, lines.join("\n"), "utf-8");
+      // Disable: add to user config (overrides project enable)
+      let content = "";
+      if (existsSync(confPath)) {
+        content = readFileSync(confPath, "utf-8");
+        // Check if already disabled
+        if (content.split("\n").some(line => {
+          const trimmed = line.trim();
+          return trimmed.startsWith("disable") && trimmed.includes(extensionPath);
+        })) {
+          return true; // Already disabled
+        }
       }
+      // Add disable line
+      content = content.trim() + (content ? "\n" : "") + `disable ${extensionPath}\n`;
+      writeFileSync(confPath, content, "utf-8");
     }
 
     return true;
@@ -191,6 +213,8 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
           `Loaded: ${enabledCount} enabled, ${disabled.length} disabled`,
           ``,
           `Config: ${configPath}`,
+          ``,
+          `💡 Tip: /suckless disable writes to ~/.pi/extensions.conf`,
         ];
 
         if (disabled.length > 0) {

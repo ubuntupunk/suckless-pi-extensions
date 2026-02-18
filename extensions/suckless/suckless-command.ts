@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 
@@ -31,15 +31,11 @@ const EXTENSION_CATEGORIES = {
 const CONFIG_PATH = ".pi/extensions.conf";
 
 /**
- * Get the project root directory (where .pi/ and extensions/ live)
+ * Get the project root directory from ExtensionAPI context
  */
-function getProjectRoot(): string {
-  // Start from current file location: extensions/suckless/suckless-command.ts
-  const currentDir = dirname(import.meta.dirname || __dirname);
-  // Go up to extensions/suckless/
-  const extensionsDir = dirname(currentDir);
-  // Go up to project root
-  return dirname(extensionsDir);
+function getProjectRoot(ctx: any): string {
+  // Use the cwd from the extension context, which should be the project root
+  return ctx.cwd || process.cwd();
 }
 
 /**
@@ -166,13 +162,13 @@ function updateExtensionsConf(rootDir: string, extensionPath: string, enable: bo
 }
 
 export default function sucklessCommandExtension(pi: ExtensionAPI) {
-  const projectRoot = getProjectRoot();
-  console.log(`[suckless] Project root: ${projectRoot}`);
-
   // /suckless command
   pi.registerCommand("suckless", {
     description: "Manage suckless extensions",
     handler: async (args, ctx) => {
+      const projectRoot = getProjectRoot(ctx);
+      console.log(`[suckless] Project root: ${projectRoot}`);
+
       const subcommand = args.trim().split(/\s+/)[0] || "status";
       const extensionName = args.trim().split(/\s+/)[1];
 

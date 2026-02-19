@@ -20,6 +20,7 @@ import {
   type ManagerConfig,
 } from "./conf-parser";
 import { createAliasAPI } from "./alias-api";
+import { info, debug, warn } from "./debug.js";
 
 /**
  * Get the directory containing this manager module
@@ -45,10 +46,10 @@ function discoverExtensions(rootDir: string): string[] {
   const results: string[] = [];
   const extDir = join(rootDir, "extensions");
 
-  console.log(`[manager] Scanning: ${extDir}`);
+  debug(`Scanning: ${extDir}`);
 
   if (!existsSync(extDir)) {
-    console.warn(`[manager] Directory not found: ${extDir}`);
+    warn(`Directory not found: ${extDir}`);
     return results;
   }
 
@@ -58,13 +59,13 @@ function discoverExtensions(rootDir: string): string[] {
       .filter(d => d.isDirectory() && !d.name.startsWith('.'))
       .map(d => d.name);
 
-    console.log(`[manager] Categories: ${categories.join(', ')}`);
+    debug(`Categories: ${categories.join(', ')}`);
 
     for (const cat of categories) {
       const catDir = join(extDir, cat);
       try {
         const entries = readdirSync(catDir, { withFileTypes: true });
-        console.log(`[manager] ${cat}: ${entries.length} entries`);
+        debug(`${cat}: ${entries.length} entries`);
 
         for (const entry of entries) {
           if (entry.name.startsWith('.')) continue;
@@ -73,24 +74,24 @@ function discoverExtensions(rootDir: string): string[] {
             const indexPath = join(catDir, entry.name, 'index.ts');
             if (existsSync(indexPath)) {
               const relPath = join(cat, entry.name, 'index.ts');
-              console.log(`[manager] Found: ${relPath}`);
+              debug(`Found: ${relPath}`);
               results.push(relPath);
             }
           } else if (entry.name.endsWith('.ts') && !entry.name.startsWith('_')) {
             const relPath = join(cat, entry.name);
-            console.log(`[manager] Found: ${relPath}`);
+            debug(`Found: ${relPath}`);
             results.push(relPath);
           }
         }
       } catch (err: any) {
-        console.error(`[manager] Error reading ${catDir}:`, err.message);
+        warn(`Error reading ${catDir}: ${err.message}`);
       }
     }
   } catch (err: any) {
-    console.error(`[manager] Error reading ${extDir}:`, err.message);
+    warn(`Error reading ${extDir}: ${err.message}`);
   }
 
-  console.log(`[manager] Total discovered: ${results.length}`);
+  debug(`Total discovered: ${results.length}`);
   return results.sort();
 }
 
@@ -110,12 +111,12 @@ async function loadExtension(
     const module = await import(resolvedPath);
     if (module.default && typeof module.default === "function") {
       await module.default(api);
-      console.log(`[manager] Loaded: ${extPath}`);
+      debug(`Loaded: ${extPath}`);
     } else {
-      console.warn(`[manager] No default export: ${extPath}`);
+      warn(`No default export: ${extPath}`);
     }
   } catch (e: any) {
-    console.error(`[manager] Failed to load ${extPath}:`, e.message);
+    error(`Failed to load ${extPath}: ${e.message}`);
   }
 }
 
@@ -128,21 +129,15 @@ export async function loadExtensions(
 ): Promise<void> {
   const projectRoot = rootDir || getProjectRoot();
 
-  console.log("[manager] Initializing extension manager...");
-  console.log(`[manager] Project root: ${projectRoot}`);
-  console.log(`[manager] __dirname: ${__dirname}`);
-  console.log(`[manager] import.meta.dirname: ${import.meta.dirname}`);
+  info("Initializing extension manager...");
+  debug(`Project root: ${projectRoot}`);
 
   // Load configuration
   const config = loadManagerConfig(projectRoot);
 
   // Log configuration summary
-  console.log(
-    `[manager] Extensions: ${config.extensions.enabled.size} enabled overrides, ${config.extensions.disabled.size} disabled`
-  );
-  console.log(
-    `[manager] Commands: ${config.commands.aliases.size} aliases, ${config.commands.groups.size} groups, ${config.commands.hidden.size} hidden`
-  );
+  info(`Extensions: ${config.extensions.enabled.size} enabled overrides, ${config.extensions.disabled.size} disabled`);
+  info(`Commands: ${config.commands.aliases.size} aliases, ${config.commands.groups.size} groups, ${config.commands.hidden.size} hidden`);
 
   // Create wrapped API with alias support
   const api = createAliasAPI(pi, config.commands.aliases);
@@ -150,31 +145,27 @@ export async function loadExtensions(
   // Discover extensions from filesystem (suckless: convention over config)
   const extensions = discoverExtensions(projectRoot);
 
-  console.log(`[manager] Discovery returned: ${extensions.length} extensions`);
-  console.log(`[manager] Extensions list: ${JSON.stringify(extensions)}`);
+  debug(`Discovery returned: ${extensions.length} extensions`);
 
   if (extensions.length === 0) {
-    console.warn("[manager] No extensions found in extensions/ directory");
-    const extDir = join(projectRoot, "extensions");
-    console.warn(`[manager] Checked: ${extDir}`);
-    console.warn(`[manager] Exists: ${existsSync(extDir)}`);
+    warn("No extensions found in extensions/ directory");
     return;
   }
 
-  console.log(`[manager] Discovered ${extensions.length} extensions`);
+  info(`Discovered ${extensions.length} extensions`);
 
   // Filter by config (default: all enabled, only disable what's listed)
   const enabledExtensions = extensions
     .filter((ext) => shouldLoadExtension(ext, config.extensions));
 
-  console.log(`[manager] Loading ${enabledExtensions.length}/${extensions.length} extensions`);
+  info(`Loading ${enabledExtensions.length}/${extensions.length} extensions`);
 
   // Load extensions sequentially to avoid race conditions
   for (const ext of enabledExtensions) {
     await loadExtension(ext, api, projectRoot);
   }
 
-  console.log("[manager] Extension manager initialized");
+  info("Extension manager initialized");
 }
 
 /**

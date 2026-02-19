@@ -12,6 +12,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { warn, debug } from "./debug.js";
 
 export interface ExtensionConfig {
   enabled: Set<string>;
@@ -50,7 +51,7 @@ export function parseExtensionsConf(
 
     const parts = trimmed.split(/\s+/);
     if (parts.length < 2) {
-      console.warn(`[${filePath}:${idx + 1}] Invalid format: ${line}`);
+      warn(`Invalid format at line ${idx + 1}: ${line}`);
       return;
     }
 
@@ -67,7 +68,7 @@ export function parseExtensionsConf(
       config.disabled.add(path);
       config.enabled.delete(path); // Remove from enabled if present
     } else {
-      console.warn(`[${filePath}:${idx + 1}] Unknown action: ${action}`);
+      warn(`Unknown action at line ${idx + 1}: ${action}`);
     }
   });
 
@@ -101,17 +102,17 @@ export function parseCommandsConf(
     }
     
     const [action, ...args] = parts;
-    
+
     if (action === "alias") {
       if (args.length < 2) {
-        console.warn(`[${filePath}:${idx + 1}] alias requires 2 arguments`);
+        warn(`alias requires 2 arguments at line ${idx + 1}`);
         return;
       }
       const [shortcut, original] = args;
       config.aliases.set(shortcut, original.startsWith("/") ? original : `/${original}`);
     } else if (action === "group") {
       if (args.length < 2) {
-        console.warn(`[${filePath}:${idx + 1}] group requires name and commands`);
+        warn(`group requires name and commands at line ${idx + 1}`);
         return;
       }
       const [name, ...commands] = args;
@@ -121,7 +122,7 @@ export function parseCommandsConf(
       const cmd = args[0].startsWith("/") ? args[0] : `/${args[0]}`;
       config.hidden.add(cmd);
     } else {
-      console.warn(`[${filePath}:${idx + 1}] Unknown action: ${action}`);
+      warn(`Unknown action at line ${idx + 1}: ${action}`);
     }
   });
 
@@ -156,16 +157,16 @@ export function loadManagerConfig(rootDir: string = process.cwd()): ManagerConfi
   if (existsSync(projectExtConfPath)) {
     const content = readFileSync(projectExtConfPath, "utf-8");
     extConfig = parseExtensionsConf(content, projectExtConfPath);
-    console.log(`[manager] Loaded project extensions from ${projectExtConfPath}`);
+    debug(`Loaded project extensions from ${projectExtConfPath}`);
   } else {
-    console.log("[manager] No project extensions.conf, loading all extensions");
+    debug("No project extensions.conf found, loading all extensions");
   }
 
   // Load user extensions.conf (overrides)
   if (existsSync(userExtConfPath)) {
     const content = readFileSync(userExtConfPath, "utf-8");
     const userConfig = parseExtensionsConf(content, userExtConfPath);
-    console.log(`[manager] Loaded user extensions from ${userExtConfPath}`);
+    debug(`Loaded user extensions from ${userExtConfPath}`);
 
     // Merge: user disabled overrides project enabled
     for (const path of userConfig.disabled) {
@@ -186,16 +187,16 @@ export function loadManagerConfig(rootDir: string = process.cwd()): ManagerConfi
   if (existsSync(projectCmdConfPath)) {
     const content = readFileSync(projectCmdConfPath, "utf-8");
     cmdConfig = parseCommandsConf(content, projectCmdConfPath);
-    console.log(`[manager] Loaded project commands from ${projectCmdConfPath}`);
+    debug(`Loaded project commands from ${projectCmdConfPath}`);
   } else {
-    console.log("[manager] No project commands.conf, using defaults");
+    debug("No project commands.conf found, using defaults");
   }
 
   // Load user commands.conf (overrides)
   if (existsSync(userCmdConfPath)) {
     const content = readFileSync(userCmdConfPath, "utf-8");
     const userConfig = parseCommandsConf(content, userCmdConfPath);
-    console.log(`[manager] Loaded user commands from ${userCmdConfPath}`);
+    debug(`Loaded user commands from ${userCmdConfPath}`);
 
     // Merge: user config takes precedence
     for (const [alias, target] of userConfig.aliases) {

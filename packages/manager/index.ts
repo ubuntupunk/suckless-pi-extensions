@@ -20,7 +20,7 @@ import {
   type ManagerConfig,
 } from "./conf-parser";
 import { createAliasAPI } from "./alias-api";
-import { info, debug, warn } from "./debug.js";
+import { info, debug, warn, error } from "./debug.js";
 
 /**
  * Get the directory containing this manager module

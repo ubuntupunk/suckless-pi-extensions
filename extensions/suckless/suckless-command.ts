@@ -146,19 +146,24 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       ? extensionPath
       : `extensions/${extensionPath}`;
 
-    // If enabling, remove from disable list (or create empty config)
+    // If enabling, add "enable" line to override project disable
     if (enable) {
-      if (!existsSync(confPath)) return true; // Nothing to update
-
-      const content = readFileSync(confPath, "utf-8");
-      const lines = content.split("\n");
-      const newLines = lines.filter(line => {
-        const trimmed = line.trim();
-        return !(trimmed.startsWith("disable") && trimmed.includes(configPath));
-      });
-      writeFileSync(confPath, newLines.join("\n"), "utf-8");
+      let content = "";
+      if (existsSync(confPath)) {
+        content = readFileSync(confPath, "utf-8");
+        // Check if already enabled
+        if (content.split("\n").some(line => {
+          const trimmed = line.trim();
+          return trimmed.startsWith("enable") && trimmed.includes(configPath);
+        })) {
+          return true; // Already enabled
+        }
+      }
+      // Add enable line (overrides project disable)
+      content = content.trim() + (content ? "\n" : "") + `enable ${configPath}\n`;
+      writeFileSync(confPath, content, "utf-8");
     } else {
-      // Disable: add to user config (overrides project enable)
+      // Disable: add "disable" line to user config (overrides project enable)
       let content = "";
       if (existsSync(confPath)) {
         content = readFileSync(confPath, "utf-8");

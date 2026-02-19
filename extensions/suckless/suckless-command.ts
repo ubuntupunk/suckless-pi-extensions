@@ -217,7 +217,11 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
       if (subcommand === "status") {
         const { disabled, configPath } = parseExtensionsConf(projectRoot);
         const allExtensions = discoverExtensions(projectRoot);
-        const enabledCount = allExtensions.filter(ext => !disabled.some(d => d.includes(ext.path))).length;
+        // Normalize ext.path to match disabled array format
+        const enabledCount = allExtensions.filter(ext => {
+          const normalizedPath = ext.path.replace(/^extensions\//, '');
+          return !disabled.some(d => d === normalizedPath);
+        }).length;
 
         const lines = [
           "━━━ Suckless Extensions Status ━━━",
@@ -242,7 +246,9 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
 
         const lines = ["━━━ Available Extensions ━━━", ``];
         for (const ext of allExtensions) {
-          const isDisabled = disabled.some(d => d.includes(ext.path));
+          // Normalize ext.path to match disabled array format (strip extensions/ prefix)
+          const normalizedPath = ext.path.replace(/^extensions\//, '');
+          const isDisabled = disabled.some(d => d === normalizedPath);
           const status = isDisabled ? "○" : "●";
           const color = isDisabled ? "dim" : "success";
           lines.push(`  ${ctx.ui.theme.fg(color, status)} ${ext.name.padEnd(25)} [${ext.category}]`);

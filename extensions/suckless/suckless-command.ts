@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-const CONFIG_PATH = ".pi/extensions.conf";
+const CONFIG_PATH = "extensions.conf";
 
 interface ExtensionInfo {
   path: string;
@@ -30,7 +30,7 @@ export default function sucklessCommandExtension(pi: ExtensionAPI) {
   function parseExtensionsConf(projectRoot: string): { disabled: string[], configPath: string } {
     const homedir = require("node:os").homedir();
     const userConfigPath = join(homedir, '.pi', CONFIG_PATH);
-    const projectConfigPath = join(projectRoot, CONFIG_PATH);
+    const projectConfigPath = join(projectRoot, '.pi', CONFIG_PATH);
 
     const disabled = new Set<string>();
     let configPath = projectConfigPath;
